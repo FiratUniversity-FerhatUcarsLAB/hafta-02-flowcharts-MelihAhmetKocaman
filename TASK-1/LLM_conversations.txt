@@ -1,0 +1,178 @@
+BEN: “ATM para çekme sistemi için detaylı pseudocode yazmanı istiyorum.
+
+Şunları içermeli: PIN doğrulama (3 hak), bakiye kontrolü, tutar
+
+kontrolü (20 TL katları), günlük limit kontrolü, işlem tekrarı seçeneği. Tüm
+
+adımları BAŞLA, OKU, YAZ, EĞER-İSE, DÖNGÜ yapılarıyla yaz.
+
+LLM: Elbette, ATM para çekme sistemi için istenen tüm adımları içeren detaylı pseudocode aşağıda verilmiştir.
+
+BAŞLA
+
+  // --- Değişken Tanımlamaları ---
+  TANIMLA PIN_SISTEM = "1234"      // Sistemde kayıtlı PIN
+  TANIMLA pinDenemeHakki = 3        // PIN deneme hakkı
+  TANIMLA bakiye = 5000             // Kullanıcının mevcut bakiyesi (TL)
+  TANIMLA gunlukLimit = 3000        // Günlük çekim limiti (TL)
+  TANIMLA gunlukCekilen = 0         // Gün içinde çekilmiş olan tutar
+  TANIMLA girilenPIN, cekilecekTutar, devamEt
+
+  // --- Ana İşlem Döngüsü ---
+  DÖNGÜ (devamEt != "H" VE devamEt != "h")
+
+    // --- PIN Doğrulama ---
+    YAZ "Lütfen kartınızı takınız."
+    YAZ "4 haneli PIN kodunuzu giriniz:"
+    OKU girilenPIN
+
+    DÖNGÜ (girilenPIN != PIN_SISTEM VE pinDenemeHakki > 1)
+      pinDenemeHakki = pinDenemeHakki - 1
+      YAZ "Hatalı PIN. Kalan deneme hakkınız: ", pinDenemeHakki
+      YAZ "Lütfen PIN kodunuzu tekrar giriniz:"
+      OKU girilenPIN
+    DÖNGÜ SONU
+
+    EĞER girilenPIN == PIN_SISTEM ISE
+      YAZ "PIN doğrulandı. Hoş geldiniz."
+
+      // --- Para Çekme İşlemi ---
+      YAZ "Çekmek istediğiniz tutarı giriniz (20 TL ve katları olmalıdır):"
+      OKU cekilecekTutar
+
+      // 1. Tutar Kontrolü (20 TL'nin katı mı?)
+      EĞER (cekilecekTutar % 20 != 0) ISE
+        YAZ "Hata: Lütfen sadece 20 TL ve katları bir tutar giriniz."
+      DEĞİLSE
+        // 2. Bakiye Kontrolü
+        EĞER (cekilecekTutar > bakiye) ISE
+          YAZ "Hata: Yetersiz bakiye. Mevcut bakiyeniz: ", bakiye, " TL"
+        DEĞİLSE
+          // 3. Günlük Limit Kontrolü
+          EĞER (cekilecekTutar + gunlukCekilen > gunlukLimit) ISE
+            YAZ "Hata: Günlük para çekme limitini aşıyorsunuz."
+            YAZ "Bu işlemle birlikte toplam çekilen tutar günlük limiti geçecektir."
+            YAZ "Bugün çekebileceğiniz maksimum tutar: ", (gunlukLimit - gunlukCekilen), " TL"
+          DEĞİLSE
+            // --- İşlem Başarılı ---
+            bakiye = bakiye - cekilecekTutar
+            gunlukCekilen = gunlukCekilen + cekilecekTutar
+            YAZ "Lütfen paranızı alınız."
+            YAZ "İşlem başarıyla tamamlandı."
+            YAZ "Kalan bakiyeniz: ", bakiye, " TL"
+          BİTTİ-EĞER
+        BİTTİ-EĞER
+      BİTTİ-EĞER
+
+    DEĞİLSE
+      YAZ "PIN 3 kez hatalı girildi. Kartınız bloke olmuştur. Lütfen şubenizle iletişime geçin."
+      BİTİR  // Programı sonlandır
+    BİTTİ-EĞER
+
+    // --- İşlem Tekrarı ---
+    YAZ "Başka bir işlem yapmak ister misiniz? (E/H)"
+    OKU devamEt
+
+    EĞER (devamEt == "E" VEYA devamEt == "e") ISE
+      // Döngü devam edecek, PIN tekrar istenecek
+      pinDenemeHakki = 3 // Yeni işlem için deneme hakkını sıfırla
+    DEĞİLSE
+      YAZ "İyi günler dileriz. Lütfen kartınızı alınız."
+    BİTTİ-EĞER
+
+  DÖNGÜ SONU
+
+BİTİR
+BEN: Bu pseudocode’u Graphviz DOT diline çevir.
+
+LLM: Elbette, ATM para çekme sistemi için hazırlanan pseudocode'un Graphviz DOT diline çevrilmiş hali aşağıdadır. Bu kodu bir Graphviz görselleştirme aracında (örneğin online bir editörde) çalıştırarak akış şemasını oluşturabilirsiniz.
+
+Kod snippet'i
+digraph ATM_Flow {
+    // Grafik ayarları
+    graph [fontname="Helvetica", fontsize=12, label="ATM Para Çekme Akış Şeması", labelloc=t, splines=ortho];
+    node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fillcolor="#EFEFEF"];
+    edge [fontname="Helvetica", fontsize=9];
+
+    // Düğüm Tanımlamaları (Nodes)
+    A [label="BAŞLA"];
+    B [label="Değişkenleri Tanımla\n(PIN, Bakiye, Limit vb.)"];
+    C [label="YAZ: 'Kartınızı takınız.'"];
+    D [label="OKU: PIN"];
+    E [shape=diamond, label="PIN Doğru mu?"];
+    F [label="pinDenemeHakki > 1 mi?"];
+    G [label="pinDenemeHakki'nı 1 azalt"];
+    H [label="YAZ: 'Hatalı PIN.\nKalan hak: ' + pinDenemeHakki"];
+    I [label="YAZ: 'PIN 3 kez hatalı girildi.\nKart bloke oldu.'"];
+    J [label="YAZ: 'PIN doğrulandı.\nHoş geldiniz.'"];
+    K [label="OKU: Cekilecek Tutar"];
+    L [shape=diamond, label="Tutar 20 TL'nin katı mı?"];
+    M [shape=diamond, label="Bakiye yeterli mi?"];
+    N [shape=diamond, label="Günlük limit aşılıyor mu?"];
+    O [label="İşlemi Gerçekleştir\nBakiye'den düş,\nGünlük Çekilen'e ekle"];
+    P [label="YAZ: 'Paranızı alınız.\nİşlem başarılı.'"];
+    Q [label="YAZ: 'Hata: Tutar 20 TL'nin\nkatı olmalıdır.'"];
+    R [label="YAZ: 'Hata: Yetersiz bakiye.'"];
+    S [label="YAZ: 'Hata: Günlük limiti\naşıyorsunuz.'"];
+    T [label="OKU: 'Başka işlem? (E/H)'"];
+    U [shape=diamond, label="Cevap 'E' mi?"];
+    V [label="YAZ: 'İyi günler.\nKartınızı alınız.'"];
+    W [label="BİTİR"];
+
+    // Akış Bağlantıları (Edges)
+    A -> B;
+    B -> C;
+    C -> D;
+    D -> E;
+
+    // PIN Kontrol Akışı
+    E -> J [label=" Evet "];
+    E -> F [label=" Hayır "];
+    F -> G [label=" Evet "];
+    F -> I [label=" Hayır "];
+    G -> H;
+    H -> D [label=" Tekrar PIN iste "];
+    I -> W;
+
+    // Başarılı PIN Sonrası Akış
+    J -> K;
+    K -> L;
+
+    // Tutar Kontrol Akışı
+    L -> M [label=" Evet "];
+    L -> Q [label=" Hayır "];
+
+    // Bakiye Kontrol Akışı
+    M -> N [label=" Evet "];
+    M -> R [label=" Hayır "];
+
+    // Limit Kontrol Akışı
+    N -> O [label=" Hayır "];
+    N -> S [label=" Evet "];
+
+    // Başarılı İşlem Akışı
+    O -> P;
+    P -> T;
+
+    // Hata Durumlarından Sonra Yeni İşlem Sorusu
+    Q -> T;
+    R -> T;
+    S -> T;
+
+    // Yeni İşlem Döngüsü
+    T -> U;
+    U -> C [label=" Evet "];
+    U -> V [label=" Hayır "];
+    V -> W;
+}
+Bu DOT kodunu nasıl kullanabilirsiniz?
+
+Bu kodu kopyalayın.
+
+Graphviz Online gibi bir web sitesine gidin.
+
+Kodu sol taraftaki metin editörüne yapıştırın.
+
+Sağ tarafta otomatik olarak oluşturulan akış şemasını görebilirsiniz.
+
+Bu şema, pseudocode'daki tüm mantıksal adımları, karar noktalarını (PIN doğruluğu, bakiye kontrolü vb.) ve döngüleri görsel olarak ifade eder.
