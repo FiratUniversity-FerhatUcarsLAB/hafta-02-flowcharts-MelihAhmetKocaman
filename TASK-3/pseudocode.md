@@ -131,3 +131,268 @@ PROGRAM HastaneRandevuSistemi
   PROGRAMI_BİTİR
 
 SON PROGRAM
+
+PROGRAM TahlilSonucGoruntuleme
+
+  // Değişkenlerin tanımlanması
+  DEĞİŞKEN kullaniciTC, kullaniciBarkod, secilenTahlilID TÜRÜNDE METİN
+  DEĞİŞKEN girisBasarili TÜRÜNDE MANTIKSAL
+  DEĞİŞKEN kullanicininTahlilleri TÜRÜNDE LİSTE
+  DEĞİŞKEN secilenTahlil, sonucDetaylari TÜRÜNDE NESNE
+
+  // 1. ADIM: KİMLİK DOĞRULAMA
+  //---------------------------------------------------------
+  BAŞLANGIÇ:
+    EKRANA_YAZ("----- TAHLİL SONUÇ SİSTEMİ -----")
+    EKRANA_YAZ("Lütfen TC Kimlik Numaranızı giriniz:")
+    kullaniciTC = KULLANICIDAN_OKU()
+
+    EKRANA_YAZ("Lütfen tahlil barkod numaranızı veya parolanızı giriniz:")
+    kullaniciBarkod = KULLANICIDAN_OKU()
+
+    // Veritabanından kimlik bilgilerini kontrol eden fonksiyon
+    girisBasarili = FONKSİYON_KimlikDogrula(kullaniciTC, kullaniciBarkod)
+
+    EĞER girisBasarili == YANLIŞ
+      EKRANA_YAZ("Hata: Girilen bilgiler yanlış. Lütfen tekrar deneyin.")
+      GİT BAŞLANGIÇ // Kimlik doğrulama adımının başına dön
+    DEĞİLSE
+      EKRANA_YAZ("Kimlik doğrulama başarılı.")
+    SON_EĞER
+
+  // 2. ADIM: TAHLİL VARLIĞI KONTROLÜ
+  //---------------------------------------------------------
+  TAHLİL_SEÇİMİ:
+    // Kullanıcıya ait tüm tahlilleri veritabanından getiren fonksiyon
+    kullanicininTahlilleri = FONKSİYON_TahlilleriGetir(kullaniciTC)
+
+    EĞER kullanicininTahlilleri LİSTESİ BOŞ
+      EKRANA_YAZ("Sistemde adınıza kayıtlı herhangi bir tahlil bulunmamaktadır.")
+      PROGRAMI_BİTİR
+    DEĞİLSE
+      EKRANA_YAZ("\n----- SİSTEMDE KAYITLI TAHLİLLERİNİZ -----")
+      DÖNGÜ her tahlil İÇİN kullanicininTahlilleri
+        // Tahlilin durumu (Örn: "Sonuç Hazır", "Çalışılıyor") ile birlikte listelenir
+        EKRANA_YAZ(tahlil.ID + " - " + tahlil.Tarih + " - " + tahlil.TahlilAdi + " [" + tahlil.Durum + "]")
+      SON_DÖNGÜ
+      
+      EKRANA_YAZ("\nSonucunu görüntülemek istediğiniz tahlilin numarasını giriniz:")
+      secilenTahlilID = KULLANICIDAN_OKU()
+      
+      // Kullanıcının girdiği ID'ye sahip tahlili listeden bul
+      secilenTahlil = FONKSİYON_TahliliBul(kullanicininTahlilleri, secilenTahlilID)
+      
+      EĞER secilenTahlil == BULUNAMADI
+        EKRANA_YAZ("Hata: Geçersiz tahlil numarası girdiniz. Lütfen tekrar deneyin.")
+        GİT TAHLİL_SEÇİMİ
+      SON_EĞER
+    SON_EĞER
+
+  // 3. ADIM: SONUÇ HAZIR MI KONTROLÜ
+  //---------------------------------------------------------
+  // 4. ADIM: GÖRÜNTÜLEME VEYA BEKLEME MESAJI
+  //---------------------------------------------------------
+    EĞER secilenTahlil.Durum == "Sonuç Hazır"
+      EKRANA_YAZ("\n----- TAHLİL SONUÇ DETAYLARI -----")
+      // Veritabanından tahlilin detaylı sonuçlarını getiren fonksiyon
+      sonucDetaylari = FONKSİYON_SonucDetaylariniGetir(secilenTahlil.ID)
+
+      // Sonuçları ekrana yazdır (Örnek)
+      DÖNGÜ her parametre, deger İÇİN sonucDetaylari.Parametreler
+        EKRANA_YAZ(parametre + ": " + deger + " (" + sonucDetaylari.ReferansAraliklari[parametre] + ")")
+      SON_DÖNGÜ
+      
+      // 5. ADIM: PDF İNDİRME SEÇENEĞİ
+      //---------------------------------------------------------
+      EKRANA_YAZ("\nSonucu PDF olarak indirmek ister misiniz? (E/H)")
+      kullaniciCevap = KULLANICIDAN_OKU()
+      
+      EĞER kullaniciCevap == "E" VEYA kullaniciCevap == "e"
+        // Sonuç detaylarını alıp PDF oluşturan ve indirmeyi başlatan fonksiyon
+        FONKSİYON_PdfOlusturVeIndir(sonucDetaylari)
+        EKRANA_YAZ("PDF dosyası başarıyla indirildi.")
+      DEĞİLSE
+        EKRANA_YAZ("İşlem tamamlandı.")
+      SON_EĞER
+      
+    DEĞİLSE // Sonuç hazır değilse
+      EKRANA_YAZ("\nUYARI: Seçtiğiniz tahlilin sonucu henüz hazırlanmamıştır.")
+      EKRANA_YAZ("Durumu: " + secilenTahlil.Durum)
+      EKRANA_YAZ("Lütfen daha sonra tekrar kontrol ediniz.")
+    SON_EĞER
+
+  PROGRAMI_BİTİR
+
+SON PROGRAM
+
+PROGRAM BirlesikHastaneSistemi
+
+  // ANA MENÜ DÖNGÜSÜ
+  //---------------------------------------------------------
+  DÖNGÜSÜZ_OLARAK_ÇALIŞTIR
+    EKRANA_YAZ("\n==============================================")
+    EKRANA_YAZ("===== BİRLEŞİK HASTANE BİLGİ SİSTEMİ =====")
+    EKRANA_YAZ("==============================================")
+    EKRANA_YAZ("1. Hastane Randevusu Al")
+    EKRANA_YAZ("2. Tahlil Sonuçlarını Görüntüle")
+    EKRANA_YAZ("3. Çıkış")
+    EKRANA_YAZ("----------------------------------------------")
+    EKRANA_YAZ("Lütfen yapmak istediğiniz işlemin numarasını giriniz:")
+    
+    kullaniciSecimi = KULLANICIDAN_OKU()
+
+    // Kullanıcının seçimine göre ilgili modülü çalıştır
+    SEÇİM_YAPISI kullaniciSecimi
+      DURUM "1":
+        // Hastane Randevu Modülünü Başlat
+        FONKSİYON_RandevuSisteminiCalistir()
+        BEKLE(3 saniye) // Kullanıcının sonucu görmesi için kısa bir bekleme
+      DURUM "2":
+        // Tahlil Sonuç Modülünü Başlat
+        FONKSİYON_TahlilSisteminiCalistir()
+        BEKLE(3 saniye) // Kullanıcının sonucu görmesi için kısa bir bekleme
+      DURUM "3":
+        EKRANA_YAZ("Sistemden çıkış yapılıyor...")
+        DÖNGÜYÜ_KIR // Ana menü döngüsünden çık
+      VARSAYILAN:
+        EKRANA_YAZ("Hata: Geçersiz seçim. Lütfen menüden bir numara giriniz.")
+        BEKLE(2 saniye)
+    SON_SEÇİM_YAPISI
+  SON_DÖNGÜ
+
+SON PROGRAM
+
+// =========================================================================
+// MODÜL 1: HASTANE RANDEVU SİSTEMİ FONKSİYONU
+// =========================================================================
+FONKSİYON FONKSİYON_RandevuSisteminiCalistir()
+
+  EKRANA_YAZ("\n----- HASTANE RANDEVU SİSTEMİNE YÖNLENDİRİLDİNİZ -----")
+  
+  //--- 1. ADIM: KİMLİK DOĞRULAMA ---
+  EKRANA_YAZ("Lütfen TC Kimlik Numaranızı giriniz:")
+  kullaniciTC = KULLANICIDAN_OKU()
+  EKRANA_YAZ("Lütfen parolanızı giriniz:")
+  kullaniciParola = KULLANICIDAN_OKU()
+
+  EĞER FONKSİYON_KimlikDogrula(kullaniciTC, kullaniciParola) == YANLIŞ
+    EKRANA_YAZ("Hata: Kimlik doğrulanamadı. Ana menüye dönülüyor.")
+    DÖN // Fonksiyondan çık
+  SON_EĞER
+  aktifKullanici = FONKSİYON_KullaniciBilgileriniGetir(kullaniciTC)
+  EKRANA_YAZ("Hoş geldiniz, " + aktifKullanici.AdSoyad)
+
+  //--- 2. ADIM: POLİKLİNİK SEÇİMİ ---
+  mevcutPoliklinikler = FONKSİYON_PoliklinikleriListele()
+  EKRANA_YAZ("\n----- POLİKLİNİKLER -----")
+  DÖNGÜ her poliklinik İÇİN mevcutPoliklinikler
+    EKRANA_YAZ(poliklinik.ID + " - " + poliklinik.Ad)
+  SON_DÖNGÜ
+  EKRANA_YAZ("Lütfen bir poliklinik numarası giriniz:")
+  secilenPoliklinikID = KULLANICIDAN_OKU()
+  
+  //--- 3. ADIM: DOKTOR SEÇİMİ ---
+  mevcutDoktorlar = FONKSİYON_DoktorlariListele(secilenPoliklinikID)
+  EKRANA_YAZ("\n----- DOKTORLAR -----")
+  DÖNGÜ her doktor İÇİN mevcutDoktorlar
+    EKRANA_YAZ(doktor.ID + " - " + doktor.Unvan + " " + doktor.AdSoyad)
+  SON_DÖNGÜ
+  EKRANA_YAZ("Lütfen bir doktor numarası giriniz:")
+  secilenDoktorID = KULLANICIDAN_OKU()
+
+  //--- 4. ADIM: TARİH VE SAAT SEÇİMİ ---
+  EKRANA_YAZ("\nLütfen randevu tarihini giriniz (GG.AA.YYYY):")
+  secilenTarih = KULLANICIDAN_OKU()
+  uygunSaatler = FONKSİYON_UygunSaatleriGetir(secilenDoktorID, secilenTarih)
+  
+  EĞER uygunSaatler LİSTESİ BOŞ
+    EKRANA_YAZ("Bu tarihte uygun randevu bulunmamaktadır. Ana menüye dönülüyor.")
+    DÖN
+  SON_EĞER
+  
+  EKRANA_YAZ("Uygun Saatler: " + BİRLEŞTİR(uygunSaatler, ", "))
+  EKRANA_YAZ("Lütfen bir saat seçiniz (SS:DD):")
+  secilenSaat = KULLANICIDAN_OKU()
+
+  //--- 5. ADIM: RANDEVU ONAYLAMA ---
+  EKRANA_YAZ("\nRandevuyu onaylıyor musunuz? (E/H)")
+  onay = KULLANICIDAN_OKU()
+  
+  EĞER onay == "E" VEYA onay == "e"
+    randevuBasarili = FONKSİYON_RandevuKaydet(aktifKullanici.ID, secilenDoktorID, secilenTarih, secilenSaat)
+    EĞER randevuBasarili
+      EKRANA_YAZ("Randevunuz başarıyla oluşturulmuştur.")
+      //--- 6. ADIM: SMS GÖNDERME ---
+      smsMesaji = "Sayin " + aktifKullanici.AdSoyad + ", " + secilenTarih + " " + secilenSaat + " tarihli randevunuz olusturulmustur."
+      FONKSİYON_SmsGonder(aktifKullanici.Telefon, smsMesaji)
+      EKRANA_YAZ("Randevu bilgileriniz SMS ile gönderilmiştir.")
+    DEĞİLSE
+      EKRANA_YAZ("Hata: Randevu oluşturulamadı.")
+    SON_EĞER
+  DEĞİLSE
+    EKRANA_YAZ("Randevu işlemi iptal edildi.")
+  SON_EĞER
+  EKRANA_YAZ("Ana menüye dönülüyor...")
+SON_FONKSİYON
+
+// =========================================================================
+// MODÜL 2: TAHLİL SONUÇ SİSTEMİ FONKSİYONU
+// =========================================================================
+FONKSİYON FONKSİYON_TahlilSisteminiCalistir()
+
+  EKRANA_YAZ("\n----- TAHLİL SONUÇ SİSTEMİNE YÖNLENDİRİLDİNİZ -----")
+
+  //--- 1. ADIM: KİMLİK DOĞRULAMA ---
+  EKRANA_YAZ("Lütfen TC Kimlik Numaranızı giriniz:")
+  kullaniciTC = KULLANICIDAN_OKU()
+  EKRANA_YAZ("Lütfen tahlil barkod numaranızı veya parolanızı giriniz:")
+  kullaniciBarkod = KULLANICIDAN_OKU()
+
+  EĞER FONKSİYON_KimlikDogrula(kullaniciTC, kullaniciBarkod) == YANLIŞ
+    EKRANA_YAZ("Hata: Kimlik doğrulanamadı. Ana menüye dönülüyor.")
+    DÖN // Fonksiyondan çık
+  SON_EĞER
+  EKRANA_YAZ("Kimlik doğrulama başarılı.")
+
+  //--- 2. ADIM: TAHLİL VARLIĞI KONTROLÜ ---
+  kullanicininTahlilleri = FONKSİYON_TahlilleriGetir(kullaniciTC)
+  
+  EĞER kullanicininTahlilleri LİSTESİ BOŞ
+    EKRANA_YAZ("Sistemde adınıza kayıtlı tahlil bulunmamaktadır. Ana menüye dönülüyor.")
+    DÖN
+  SON_EĞER
+  
+  EKRANA_YAZ("\n----- KAYITLI TAHLİLLERİNİZ -----")
+  DÖNGÜ her tahlil İÇİN kullanicininTahlilleri
+    EKRANA_YAZ(tahlil.ID + " - " + tahlil.Tarih + " - " + tahlil.TahlilAdi + " [" + tahlil.Durum + "]")
+  SON_DÖNGÜ
+  
+  EKRANA_YAZ("\nİncelemek istediğiniz tahlilin numarasını giriniz:")
+  secilenTahlilID = KULLANICIDAN_OKU()
+  secilenTahlil = FONKSİYON_TahliliBul(kullanicininTahlilleri, secilenTahlilID)
+  
+  EĞER secilenTahlil == BULUNAMADI
+    EKRANA_YAZ("Geçersiz seçim. Ana menüye dönülüyor.")
+    DÖN
+  SON_EĞER
+  
+  //--- 3. & 4. ADIMLAR: SONUÇ KONTROLÜ VE GÖRÜNTÜLEME ---
+  EĞER secilenTahlil.Durum == "Sonuç Hazır"
+    sonucDetaylari = FONKSİYON_SonucDetaylariniGetir(secilenTahlil.ID)
+    EKRANA_YAZ("\n----- SONUÇ DETAYLARI -----")
+    DÖNGÜ her parametre, deger İÇİN sonucDetaylari.Parametreler
+      EKRANA_YAZ(parametre + ": " + deger)
+    SON_DÖNGÜ
+    
+    //--- 5. ADIM: PDF İNDİRME ---
+    EKRANA_YAZ("\nSonucu PDF olarak indirmek ister misiniz? (E/H)")
+    cevap = KULLANICIDAN_OKU()
+    EĞER cevap == "E" VEYA cevap == "e"
+      FONKSİYON_PdfOlusturVeIndir(sonucDetaylari)
+      EKRANA_YAZ("PDF dosyası başarıyla indirildi.")
+    SON_EĞER
+  DEĞİLSE
+    EKRANA_YAZ("\nUYARI: Bu tahlilin sonucu henüz hazır değil. Durum: " + secilenTahlil.Durum)
+  SON_EĞER
+  EKRANA_YAZ("Ana menüye dönülüyor...")
+SON_FONKSİYON
