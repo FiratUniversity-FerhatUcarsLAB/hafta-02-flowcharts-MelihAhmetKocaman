@@ -1,0 +1,105 @@
+digraph ECommerceFlow {
+    // --- GENEL AYARLAR ---
+    rankdir=TB;
+    splines=ortho;
+    node [shape=box, style="rounded,filled", fontname="Helvetica", fillcolor="#f8f9fa"];
+    edge [fontname="Helvetica"];
+
+    // --- DÜĞÜM TANIMLAMALARI ---
+
+    // Başlangıç / Bitiş Düğümleri
+    start_node [label="SİTEYE GİRİŞ", shape=ellipse, style=filled, fillcolor="#a3d9a5"];
+    end_node [label="SÜREÇ BİTTİ", shape=ellipse, style=filled, fillcolor="#a3d9a5"];
+
+    // Karar Düğümleri (EĞER-İSE)
+    node [shape=diamond, style=filled, fillcolor="#cde8f5"];
+    stok_kontrol [label="Stok Yeterli mi?"];
+    indirim_kod_gecerli [label="Kod Veritabanında\nGeçerli mi?"];
+    indirim_sure_dolmus [label="Kodun Süresi\nDolmuş mu?"];
+    indirim_min_tutar [label="Min. Sepet Tutarı\nSağlandı mı?"];
+    odeme_basarili [label="Ödeme Başarılı mı?"];
+    kargo_bedava_mi [label="Toplam Tutar\nÜcretsiz Kargo\nLimitinde mi?"];
+
+    // İşlem Düğümleri
+    node [shape=box, style="rounded,filled", fillcolor="#f8f9fa"];
+    oturum_yonetimi [label="Oturum Yönetimi\n(Kullanıcı/Misafir Tespiti)"];
+    sepete_ekle [label="Kullanıcı 'Sepete Ekle' Tıklar"];
+    urun_sepete_eklenir [label="Ürün Sepete Eklenir / Miktarı Artırılır"];
+    sepeti_goster [label="Sepet Sayfası Görüntülenir\nAra Toplam Hesaplanır"];
+    indirim_kodu_gir [label="İndirim Kodu Girilir"];
+    indirim_uygulanir [label="İndirim Sepet Toplamına Uygulanır"];
+    odeme_adimina_gec [label="Ödeme Adımına Geçilir\nAdres Bilgisi Girilir"];
+    kargo_hesapla [label="Kargo Ücreti Hesaplanır"];
+    toplam_goster [label="Nihai Toplam Gösterilir\n(Ara Tpl - İndirim + Kargo)"];
+    odeme_yap [label="Ödeme Bilgileri Girilir ve Gönderilir"];
+    veritabani_islem_baslat [label="START TRANSACTION"];
+    siparis_olustur [label="1. Sipariş Veritabanına Kaydedilir"];
+    stok_dus [label="2. Ürün Stokları Güncellenir (Düşülür)"];
+    sepeti_temizle [label="3. Kullanıcının Sepeti Temizlenir"];
+    veritabani_islem_bitir [label="COMMIT TRANSACTION"];
+    onay_sayfasi [label="Sipariş Onay Sayfası Gösterilir"];
+
+    // Çıktı / Hata Düğümleri
+    node [shape=note, style=filled, fillcolor="#fff3cd"];
+    stok_yetersiz_hata [label="HATA:\nStok Yetersiz"];
+    indirim_gecersiz_hata [label="HATA:\nKod Geçersiz"];
+    indirim_sure_dolmus_hata [label="HATA:\nKodun Süresi Dolmuş"];
+    indirim_min_tutar_hata [label="HATA:\nMinimum Sepet Tutarı Sağlanmadı"];
+    odeme_basarisiz_hata [label="HATA:\nÖdeme Başarısız"];
+
+    // --- AKIŞ BAĞLANTILARI ---
+
+    // Başlangıç ve Sepet İşlemleri
+    start_node -> oturum_yonetimi;
+    oturum_yonetimi -> sepete_ekle;
+    sepete_ekle -> stok_kontrol [label="Ürün ID ve Miktar Oku"];
+    
+    stok_kontrol -> urun_sepete_eklenir [label=" EVET "];
+    stok_kontrol -> stok_yetersiz_hata [label=" HAYIR "];
+    stok_yetersiz_hata -> sepete_ekle; // Kullanıcı başka ürün deneyebilir
+
+    urun_sepete_eklenir -> sepeti_goster;
+    
+    // Sepet Sayfası ve İndirim
+    sepeti_goster -> indirim_kodu_gir;
+    sepeti_goster -> odeme_adimina_gec [label="'Satın Al' Tıklandı"];
+    indirim_kodu_gir -> indirim_kod_gecerli [label="Kod Uygula"];
+
+    indirim_kod_gecerli -> indirim_gecersiz_hata [label=" HAYIR "];
+    indirim_kod_gecerli -> indirim_sure_dolmus [label=" EVET "];
+
+    indirim_sure_dolmus -> indirim_sure_dolmus_hata [label=" EVET "];
+    indirim_sure_dolmus -> indirim_min_tutar [label=" HAYIR "];
+    
+    indirim_min_tutar -> indirim_min_tutar_hata [label=" HAYIR "];
+    indirim_min_tutar -> indirim_uygulanir [label=" EVET "];
+
+    // Hata ve başarı durumlarından sonra sepetin güncel halini gösterme
+    indirim_uygulanir -> sepeti_goster;
+    indirim_gecersiz_hata -> sepeti_goster;
+    indirim_sure_dolmus_hata -> sepeti_goster;
+    indirim_min_tutar_hata -> sepeti_goster;
+
+    // Ödeme Süreci
+    odeme_adimina_gec -> kargo_bedava_mi;
+
+    kargo_bedava_mi -> kargo_hesapla [label=" HAYIR "];
+    kargo_bedava_mi -> toplam_goster [label=" EVET \n(Kargo=0)"];
+    
+    kargo_hesapla -> toplam_goster;
+    
+    toplam_goster -> odeme_yap;
+    odeme_yap -> odeme_basarili [label="Ödeme Servisine Gönder"];
+    
+    odeme_basarili -> odeme_basarisiz_hata [label=" HAYIR "];
+    odeme_basarisiz_hata -> odeme_yap; // Tekrar deneme imkanı
+
+    // Başarılı Ödeme Akışı (Transaction)
+    odeme_basarili -> veritabani_islem_baslat [label=" EVET "];
+    veritabani_islem_baslat -> siparis_olustur;
+    siparis_olustur -> stok_dus;
+    stok_dus -> sepeti_temizle;
+    sepeti_temizle -> veritabani_islem_bitir;
+    veritabani_islem_bitir -> onay_sayfasi;
+    onay_sayfasi -> end_node;
+}
