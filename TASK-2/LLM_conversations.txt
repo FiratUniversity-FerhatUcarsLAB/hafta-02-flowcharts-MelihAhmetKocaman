@@ -1,0 +1,474 @@
+BEN: E-ticaret sitesinde sepet yönetimi ve ödeme sistemini adım adım açıkla.
+Kullanıcı girişi, ürün ekleme, stok kontrolü, indirim kodu, kargo hesaplama
+ve ödeme aşamalarını içermeli.
+
+LLM: Harika bir soru! Bir e-ticaret sitesinin temelini oluşturan sepet ve ödeme sisteminin işleyişini, belirttiğiniz tüm adımları içerecek şekilde adım adım ve hem kullanıcı hem de sistem tarafını açıklayarak inceleyelim.
+E-Ticaret Sepet Yönetimi ve Ödeme Süreci Akışı
+Bu süreç, kullanıcının bir ürünü beğenmesinden, ödemeyi tamamlayıp sipariş onayı almasına kadar geçen kritik adımları kapsar.
+
+Adım 1: Kullanıcı Girişi ve Oturum Yönetimi (Session Management)
+Her şey kullanıcının siteye girmesiyle başlar. Sistemin, her bir kullanıcıyı (giriş yapmış olsun veya olmasın) tanıması gerekir.
+
+Misafir Kullanıcı:
+
+Kullanıcı siteye girdiğinde, sunucu tarafında geçici bir "oturum" (session) oluşturulur. Bu oturumun benzersiz bir kimliği (Session ID) vardır ve bu kimlik kullanıcının tarayıcısında bir çerez (cookie) olarak saklanır.
+
+Kullanıcının sepete eklediği ürünler, bu geçici oturum kimliği ile ilişkilendirilir. Tarayıcıyı kapattığında bu sepet genellikle kaybolur (eğer özel bir teknoloji kullanılmıyorsa).
+
+Giriş Yapmış Kullanıcı (Üye):
+
+Kullanıcı e-posta ve şifresiyle giriş yaptığında, sistem geçici oturum kimliğini kullanıcının veritabanındaki kalıcı hesap kimliğiyle eşleştirir.
+
+Bu andan itibaren sepete eklenen ürünler, doğrudan kullanıcının hesabına kaydedilir. Böylece kullanıcı farklı bir cihazdan (örneğin telefondan) giriş yaptığında sepetindeki ürünleri görmeye devam eder.
+
+Adım 2: Ürün Ekleme ve Stok Kontrolü
+Kullanıcı ürün sayfasında "Sepete Ekle" butonuna tıklar. Bu basit görünen eylemin arkasında önemli kontroller döner:
+
+İstek Gönderimi: Butona tıklandığında, kullanıcının tarayıcısı sunucuya bir istek gönderir. Bu istek genellikle ürünün kimliğini (Product ID) ve miktarını (quantity) içerir.
+
+Stok Kontrolü (En Kritik Adım):
+
+Sunucu, veritabanından bu ürünün mevcut stok adedini kontrol eder.
+
+Stok Varsa: EĞER istenen_miktar <= mevcut_stok İSE işlem devam eder.
+
+Stok Yoksa veya Yetersizse: EĞER istenen_miktar > mevcut_stok İSE sunucu kullanıcıya bir hata mesajı gösterir ("Üzgünüz, bu üründen stokta yeterli sayıda bulunmuyor." gibi) ve ürünü sepete eklemez.
+
+Sepete Ekleme:
+
+Stok yeterliyse, ürün bilgileri (ID, ad, fiyat, miktar) kullanıcının oturumuyla veya veritabanındaki hesabıyla ilişkili sepet verisine eklenir.
+
+Kullanıcıya görsel bir geri bildirim verilir (örn: "Ürün sepetinize eklendi" mesajı veya sağ üst köşedeki sepet ikonunda ürün sayısının artması).
+
+Adım 3: Sepet Sayfası ve Düzenlemeler
+Kullanıcı sepet ikonuna tıklayarak sepet detay sayfasına gider. Bu sayfada şunlar gerçekleşir:
+
+Ürün Listeleme: Sepete eklenen tüm ürünler, resimleri, adları, miktarları, birim fiyatları ve toplam fiyatları ile listelenir.
+
+Miktar Güncelleme: Kullanıcı bir ürünün miktarını artırabilir veya azaltabilir. Her değişiklikte, sistem arka planda o ürün için yeniden stok kontrolü yapar.
+
+Ürün Silme: Kullanıcı ürünü sepetten tamamen kaldırabilir.
+
+Ara Toplam: Ürünlerin KDV hariç veya dahil toplam fiyatı gösterilir.
+
+Adım 4: İndirim Kodu Uygulama ve Kargo Hesaplama
+Ödeme öncesi son düzenlemeler bu aşamada yapılır.
+
+İndirim Kodu (Kupon):
+
+Kullanıcı kupon kodunu girip "Uygula" butonuna basar.
+
+Sistem veritabanında bu kodun geçerliliğini kontrol eder:
+
+Kod mevcut mu?
+
+Son kullanma tarihi geçmiş mi?
+
+Belirli ürünler/kategoriler için mi geçerli?
+
+Minimum sepet tutarı şartı var mı?
+
+Koşullar uygunsa, indirim (yüzdesel veya sabit tutar) ara toplama uygulanır ve yeni toplam hesaplanır.
+
+Kargo Hesaplama:
+
+Bu genellikle kullanıcı adres bilgisini girdikten sonra yapılır, ancak bazı sistemler varsayılan veya tahminî bir kargo ücretini bu adımda gösterebilir.
+
+Hesaplama genellikle şu kriterlere dayanır:
+
+Teslimat adresi: Şehir içi, şehir dışı, yurt dışı gibi.
+
+Kargo firması ve gönderim tipi: Standart, ekspres vb.
+
+Ürünlerin ağırlığı veya boyutu (desi).
+
+Kampanyalar: Örneğin, "150 TL ve üzeri kargo bedava" kampanyası varsa, sepet toplamı bu tutarı aşıyorsa kargo ücreti 0 olarak ayarlanır.
+
+Adım 5: Ödeme Adımına Geçiş (Checkout)
+Kullanıcı "Satın Al" veya "Ödemeye Git" butonuna tıklar.
+
+Giriş Kontrolü: Sistem kullanıcının giriş yapıp yapmadığını tekrar kontrol eder.
+
+Giriş Yapmışsa: Kayıtlı adreslerini seçebileceği veya yeni adres ekleyebileceği adres sayfasına yönlendirilir.
+
+Misafir İse: Genellikle üç seçenek sunulur:
+
+Üye Girişi: "Zaten bir hesabım var."
+
+Yeni Üyelik: "Hesap oluştur."
+
+Üye Olmadan Devam Et: Teslimat için gerekli bilgileri (adres, e-posta, telefon) girmesi istenir.
+
+Adres Bilgileri: Kullanıcı fatura ve teslimat adreslerini girer veya seçer. Bu bilgi, kargo ücretinin netleşmesi ve faturanın oluşturulması için zorunludur.
+
+Adım 6: Ödeme Yöntemi Seçimi ve Ödeme İşlemi
+Bu, sürecin en hassas ve güvenli olması gereken adımıdır.
+
+Ödeme Yöntemi Seçimi: Kullanıcıya sunulan seçenekler listelenir (Kredi/Banka Kartı, Havale/EFT, Kapıda Ödeme vb.).
+
+Kredi Kartı ile Ödeme (En Yaygın Senaryo):
+
+Kullanıcı kart bilgilerini (Kart No, Son Kullanma Tarihi, CVV) girer. Güvenlik Notu: Bu formlar genellikle doğrudan ödeme hizmeti sağlayıcısının (örn: Iyzico, PayTR, Stripe) güvenli sunucularına veri gönderen bir iframe içinde sunulur. Bu, PCI-DSS uyumluluğu için kritiktir ve e-ticaret sitesinin kart bilgilerini asla kendi veritabanında saklamamasını sağlar.
+
+Bilgiler, şifreli bir bağlantı (SSL/TLS) üzerinden ödeme ağ geçidine (payment gateway) gönderilir.
+
+Ödeme ağ geçidi, bankayla iletişime geçerek provizyon (ödeme onayı) talep eder.
+
+Banka, kartın limitini, geçerliliğini kontrol eder ve işlemi onaylar veya reddeder. Bu aşamada 3D Secure (telefona gelen SMS şifresi) devreye girer.
+
+İşlem Sonucu:
+
+Başarılı Ödeme:
+
+Ödeme ağ geçidi, e-ticaret sitesine "Ödeme Başarılı" yanıtını gönderir.
+
+Sistem hemen siparişi veritabanına "Onaylandı" veya "Hazırlanıyor" durumuyla kaydeder.
+
+Satılan ürünlerin adedi, veritabanındaki stoktan düşülür. Bu çok önemlidir, çünkü aynı anda başka birinin aynı ürünü almasını engeller.
+
+Kullanıcıya "Siparişiniz Alınmıştır" onay sayfası gösterilir ve bir onay e-postası/SMS'i gönderilir.
+
+Kullanıcının sepeti boşaltılır.
+
+Başarısız Ödeme:
+
+Ödeme ağ geçidi, e-ticaret sitesine "Ödeme Başarısız" yanıtını (örn: yetersiz bakiye, hatalı bilgi) gönderir.
+
+Sistem, kullanıcıya bir hata mesajı gösterir ve ödeme bilgilerini tekrar girmesini veya farklı bir yöntem seçmesini ister.
+
+Stoktan düşme işlemi yapılmaz.
+
+Özet Akış Şeması
+Kullanıcı -> Ürün Seçer -> [Stok Kontrolü] -> Sepete Ekle
+   |
+   V
+Sepet Sayfası -> Miktar Güncelle / Ürün Sil / İndirim Kodu Gir
+   |
+   V
+Ödeme Adımı -> [Giriş Yap / Üye Olmadan Devam Et] -> Adres Bilgisi Gir
+   |
+   V
+[Kargo Hesaplaması Netleşir] -> Ödeme Yöntemi Seç (Kredi Kartı)
+   |
+   V
+Ödeme Ağ Geçidine Yönlendirme -> [Banka Onayı / 3D Secure]
+   |
+   +-----> BAŞARILI ------> Stoktan Düş -> Sipariş Oluştur -> Onay Sayfası/E-posta -> Sepeti Boşalt
+   |
+   +-----> BAŞARISIZ ----> Hata Mesajı Göster -> Ödeme Sayfasına Geri Dön
+Bu adımlar, modern bir e-ticaret sitesinin sorunsuz, güvenli ve verimli bir alışveriş deneyimi sunmasının temelini oluşturur.
+
+BEN: “Bu sistemi detaylı pseudocode yazmanı istiyorum.
+Tüm adımları BAŞLA, OKU, YAZ, EĞER-İSE, DÖNGÜ yapılarıyla yaz.
+
+LLM: Elbette, e-ticaret sepet ve ödeme sisteminin tüm adımlarını içeren detaylı pseudocode'u tek seferde aşağıda bulabilirsiniz.
+
+Kod snippet'i
+// =====================================================================
+// == E-TİCARET SEPET VE ÖDEME SİSTEMİ PSEUDOCODE'U (TÜM ADIMLAR) ==
+// =====================================================================
+
+// ---------------------------------------------------------------------
+// Fonksiyon 1: Kullanıcı Oturumunu ve Sepetini Başlatma
+// Açıklama: Kullanıcı siteye girdiği anda çalışır ve misafir/üye sepetini hazırlar.
+// ---------------------------------------------------------------------
+BAŞLA: Fonksiyon OturumYonetimi()
+    // Kullanıcının tarayıcısından oturum kimliği okunur.
+    OKU kullanici_tarayici_cookie("oturum_kimligi") -> mevcut_oturum_kimligi
+
+    EĞER mevcut_oturum_kimligi GEÇERSİZ İSE
+        // Kullanıcı siteye ilk kez giriyor veya çerezleri silinmiş.
+        OLUŞTUR yeni benzersiz "oturum_kimligi"
+        KAYDET kullanici_tarayici_cookie("oturum_kimligi") = yeni "oturum_kimligi"
+        ATA aktif_sepet_sahibi = yeni "oturum_kimligi" // Misafir kullanıcı
+    DEĞİLSE
+        // Mevcut oturumu olan bir kullanıcı.
+        // Veritabanından bu oturum kimliğinin bir üye hesabına bağlı olup olmadığı kontrol edilir.
+        OKU Veritabanı.Kullanicilar("oturum_kimligi" == mevcut_oturum_kimligi) -> bagli_kullanici_hesabi
+
+        EĞER bagli_kullanici_hesabi VAR İSE
+            // Kullanıcı daha önce giriş yapmış.
+            ATA aktif_sepet_sahibi = bagli_kullanici_hesabi.kullanici_id
+        DEĞİLSE
+            // Kullanıcı giriş yapmamış bir misafir.
+            ATA aktif_sepet_sahibi = mevcut_oturum_kimligi
+        BİTİR EĞER
+    BİTİR EĞER
+
+    YAZ "Oturum ve sepet sahibi belirlendi: " + aktif_sepet_sahibi
+BİTİR: Fonksiyon OturumYonetimi
+
+// ---------------------------------------------------------------------
+// Fonksiyon 2: Sepete Ürün Ekleme (Stok Kontrolü ile)
+// Açıklama: Kullanıcı "Sepete Ekle" butonuna tıkladığında tetiklenir.
+// ---------------------------------------------------------------------
+BAŞLA: Fonksiyon SepeteUrunEkle(urun_id, istenen_miktar)
+    // Ürünün stok durumu veritabanından okunur.
+    OKU Veritabanı.Urunler("urun_id" == urun_id).stok_adeti -> mevcut_stok
+
+    EĞER mevcut_stok >= istenen_miktar İSE
+        // STOK YETERLİ
+        // Kullanıcının mevcut sepeti veritabanından okunur.
+        OKU Veritabanı.Sepetler("sahip_id" == aktif_sepet_sahibi) -> kullanici_sepeti
+
+        // Ürünün sepette olup olmadığı kontrol edilir.
+        OKU kullanici_sepeti.urunler("urun_id" == urun_id) -> sepetteki_urun
+
+        EĞER sepetteki_urun VAR İSE
+            // Ürün zaten sepette, sadece miktarı artırılır.
+            GÜNCELLE sepetteki_urun.miktar = sepetteki_urun.miktar + istenen_miktar
+        DEĞİLSE
+            // Ürün sepette yok, yeni ürün olarak eklenir.
+            EKLE {urun_id, istenen_miktar} TO kullanici_sepeti.urunler
+        BİTİR EĞER
+
+        KAYDET kullanici_sepeti TO Veritabanı.Sepetler
+        YAZ "Başarılı: Ürün sepetinize eklendi."
+    DEĞİLSE
+        // STOK YETERSIZ
+        YAZ "Hata: Üzgünüz, bu üründen stokta yeterli sayıda bulunmuyor."
+    BİTİR EĞER
+BİTİR: Fonksiyon SepeteUrunEkle
+
+// ---------------------------------------------------------------------
+// Fonksiyon 3: Sepet Görüntüleme ve Toplamları Hesaplama
+// Açıklama: Kullanıcı sepet sayfasına gittiğinde çalışır.
+// ---------------------------------------------------------------------
+BAŞLA: Fonksiyon SepetiGoster()
+    ATA ara_toplam = 0
+    ATA genel_toplam = 0
+
+    // Aktif kullanıcının sepetindeki tüm ürünler okunur.
+    OKU Veritabanı.Sepetler("sahip_id" == aktif_sepet_sahibi).urunler -> sepet_urun_listesi
+
+    YAZ "--- SEPETİNİZ ---"
+    DÖNGÜ sepet_urun_listesi içindeki her bir 'sepet_urunu' için
+        // Her bir ürünün detayları (fiyat, ad vb.) ürünler tablosundan okunur.
+        OKU Veritabanı.Urunler("urun_id" == sepet_urunu.urun_id) -> urun_detaylari
+
+        HESAPLA urun_toplam_fiyat = urun_detaylari.fiyat * sepet_urunu.miktar
+        YAZ urun_detaylari.ad + " - Miktar: " + sepet_urunu.miktar + " - Toplam: " + urun_toplam_fiyat + " TL"
+
+        HESAPLA ara_toplam = ara_toplam + urun_toplam_fiyat
+    BİTİR DÖNGÜ
+
+    YAZ "------------------"
+    YAZ "Ara Toplam: " + ara_toplam + " TL"
+
+    OKU Veritabanı.Sepetler("sahip_id" == aktif_sepet_sahibi) -> sepet_bilgisi
+    HESAPLA kargo_ucreti = KargoHesapla(sepet_bilgisi.adres) // Fonksiyon 5'i çağır
+    HESAPLA indirim_tutari = sepet_bilgisi.uygulanan_indirim
+
+    HESAPLA genel_toplam = ara_toplam - indirim_tutari + kargo_ucreti
+
+    YAZ "İndirim: -" + indirim_tutari + " TL"
+    YAZ "Kargo Ücreti: +" + kargo_ucreti + " TL"
+    YAZ "Genel Toplam: " + genel_toplam + " TL"
+BİTİR: Fonksiyon SepetiGoster
+
+// ---------------------------------------------------------------------
+// Fonksiyon 4: İndirim Kodu Uygulama
+// Açıklama: Kullanıcının girdiği indirim kodunu kontrol eder ve uygular.
+// ---------------------------------------------------------------------
+BAŞLA: Fonksiyon IndirimKoduUygula(girilen_kod)
+    // Girilen kodun veritabanında var olup olmadığı kontrol edilir.
+    OKU Veritabanı.IndirimKodlari("kod" == girilen_kod) -> kupon
+
+    EĞER kupon YOK VEYA kupon.aktif_degil İSE
+        YAZ "Hata: Geçersiz veya aktif olmayan indirim kodu."
+    DEĞİLSE
+        EĞER BUGUNUN_TARIHI > kupon.son_kullanma_tarihi İSE
+            YAZ "Hata: Bu indirim kodunun süresi dolmuş."
+        DEĞİLSE
+            OKU sepet_ara_toplami
+            EĞER sepet_ara_toplami < kupon.minimum_tutar İSE
+                YAZ "Hata: Bu kodu kullanmak için sepet tutarınız en az " + kupon.minimum_tutar + " TL olmalıdır."
+            DEĞİLSE
+                // Tüm kontroller başarılı. İndirim uygulanır.
+                HESAPLA indirim_tutari = (sepet_ara_toplami * kupon.indirim_orani / 100)
+                GÜNCELLE Veritabanı.Sepetler("sahip_id" == aktif_sepet_sahibi).uygulanan_indirim = indirim_tutari
+                YAZ "Başarılı: İndirim uygulandı."
+            BİTİR EĞER
+        BİTİR EĞER
+    BİTİR EĞER
+BİTİR: Fonksiyon IndirimKoduUygula
+
+// ---------------------------------------------------------------------
+// Fonksiyon 5: Kargo Hesaplama
+// Açıklama: Adres ve sepet tutarına göre kargo ücretini hesaplar.
+// ---------------------------------------------------------------------
+BAŞLA: Fonksiyon KargoHesapla(teslimat_adresi)
+    ATA kargo_ucreti = 15.00 // Varsayılan kargo ücreti
+
+    OKU sepet_ara_toplami
+    OKU Veritabanı.Ayarlar("ucretsiz_kargo_limiti") -> ucretsiz_kargo_limiti
+
+    EĞER sepet_ara_toplami >= ucretsiz_kargo_limiti İSE
+        ATA kargo_ucreti = 0
+    DEĞİLSE
+        EĞER teslimat_adresi.sehir == "İstanbul" İSE
+            ATA kargo_ucreti = 12.00
+        BİTİR EĞER
+    BİTİR EĞER
+
+    DÖNDÜR kargo_ucreti
+BİTİR: Fonksiyon KargoHesapla
+
+// ---------------------------------------------------------------------
+// Fonksiyon 6: Ödeme ve Siparişi Tamamlama
+// Açıklama: En kritik adımdır. Ödemeyi alır, siparişi oluşturur, stoğu günceller.
+// ---------------------------------------------------------------------
+BAŞLA: Fonksiyon OdemeYap(kart_bilgileri, adres_bilgileri)
+    // 1. ADIM: Son tutarı tekrar hesapla ve doğrula.
+    HESAPLA son_tutar = (sepet_ara_toplami - uygulanan_indirim + kargo_ucreti)
+
+    // 2. ADIM: Ödeme hizmet sağlayıcısına istek gönder.
+    YAZ "Ödeme işlemi için bankaya yönlendiriliyor..."
+    GÖNDER {kart_bilgileri, son_tutar} TO OdemeServisi -> odeme_yaniti
+
+    // 3. ADIM: Ödeme yanıtını kontrol et.
+    EĞER odeme_yaniti.durum == "BASARILI" İSE
+        YAZ "Ödeme başarılı. Sipariş oluşturuluyor..."
+        // -- VERİTABANI İŞLEMİ BAŞLAT (Hepsi başarılı olmalı ya da hiçbiri) --
+        
+        // a) Siparişi veritabanına kaydet.
+        OLUŞTUR yeni_siparis = {kullanici_id, adres_bilgileri, sepet_urun_listesi, son_tutar, tarih}
+        KAYDET yeni_siparis TO Veritabanı.Siparisler
+
+        // b) Satılan ürünlerin stoklarını düş.
+        DÖNGÜ sepet_urun_listesi içindeki her bir 'satilan_urun' için
+            OKU Veritabanı.Urunler("urun_id" == satilan_urun.urun_id).stok_adeti -> guncel_stok
+            HESAPLA yeni_stok = guncel_stok - satilan_urun.miktar
+            GÜNCELLE Veritabanı.Urunler("urun_id" == satilan_urun.urun_id).stok_adeti = yeni_stok
+        BİTİR DÖNGÜ
+
+        // c) Kullanıcının sepetini temizle.
+        SİL Veritabanı.Sepetler("sahip_id" == aktif_sepet_sahibi)
+
+        // -- VERİTABANI İŞLEMİ BİTİR --
+
+        YAZ "Siparişiniz başarıyla tamamlandı! Sipariş Numaranız: " + yeni_siparis.id
+        // Kullanıcıya onay e-postası gönderilir.
+        
+    DEĞİLSE
+        // Ödeme başarısız oldu.
+        YAZ "Hata: Ödeme işlemi başarısız oldu. Hata mesajı: " + odeme_yaniti.mesaj
+        // Hiçbir veritabanı işlemi (stok düşme, sipariş kaydı) yapılmaz.
+    BİTİR EĞER
+BİTİR: Fonksiyon OdemeYap
+
+BEN: Pseudocode’u Graphviz DOT formatına çevir. rankdir=TB kullan. Karar
+
+noktalarında EVET/HAYIR etiketlerini unutma.
+
+LLM: Harika bir fikir! Pseudocode'un mantıksal akışını bir şemaya dönüştürmek, sürecin anlaşılmasını çok daha kolaylaştırır. İşte e-ticaret sepet ve ödeme sisteminin pseudocode'una dayalı olarak hazırlanmış Graphviz DOT formatındaki akış şeması kodu.
+
+Bu kodu herhangi bir online Graphviz editörüne (örneğin, dreampuf.github.io/GraphvizOnline veya edotor.net) yapıştırarak görsel şemayı oluşturabilirsiniz.
+
+Graphviz DOT Kodu
+Kod snippet'i
+digraph ECommerceFlow {
+    // --- GENEL AYARLAR ---
+    rankdir=TB;
+    splines=ortho;
+    node [shape=box, style="rounded,filled", fontname="Helvetica", fillcolor="#f8f9fa"];
+    edge [fontname="Helvetica"];
+
+    // --- DÜĞÜM TANIMLAMALARI ---
+
+    // Başlangıç / Bitiş Düğümleri
+    start_node [label="SİTEYE GİRİŞ", shape=ellipse, style=filled, fillcolor="#a3d9a5"];
+    end_node [label="SÜREÇ BİTTİ", shape=ellipse, style=filled, fillcolor="#a3d9a5"];
+
+    // Karar Düğümleri (EĞER-İSE)
+    node [shape=diamond, style=filled, fillcolor="#cde8f5"];
+    stok_kontrol [label="Stok Yeterli mi?"];
+    indirim_kod_gecerli [label="Kod Veritabanında\nGeçerli mi?"];
+    indirim_sure_dolmus [label="Kodun Süresi\nDolmuş mu?"];
+    indirim_min_tutar [label="Min. Sepet Tutarı\nSağlandı mı?"];
+    odeme_basarili [label="Ödeme Başarılı mı?"];
+    kargo_bedava_mi [label="Toplam Tutar\nÜcretsiz Kargo\nLimitinde mi?"];
+
+    // İşlem Düğümleri
+    node [shape=box, style="rounded,filled", fillcolor="#f8f9fa"];
+    oturum_yonetimi [label="Oturum Yönetimi\n(Kullanıcı/Misafir Tespiti)"];
+    sepete_ekle [label="Kullanıcı 'Sepete Ekle' Tıklar"];
+    urun_sepete_eklenir [label="Ürün Sepete Eklenir / Miktarı Artırılır"];
+    sepeti_goster [label="Sepet Sayfası Görüntülenir\nAra Toplam Hesaplanır"];
+    indirim_kodu_gir [label="İndirim Kodu Girilir"];
+    indirim_uygulanir [label="İndirim Sepet Toplamına Uygulanır"];
+    odeme_adimina_gec [label="Ödeme Adımına Geçilir\nAdres Bilgisi Girilir"];
+    kargo_hesapla [label="Kargo Ücreti Hesaplanır"];
+    toplam_goster [label="Nihai Toplam Gösterilir\n(Ara Tpl - İndirim + Kargo)"];
+    odeme_yap [label="Ödeme Bilgileri Girilir ve Gönderilir"];
+    veritabani_islem_baslat [label="START TRANSACTION"];
+    siparis_olustur [label="1. Sipariş Veritabanına Kaydedilir"];
+    stok_dus [label="2. Ürün Stokları Güncellenir (Düşülür)"];
+    sepeti_temizle [label="3. Kullanıcının Sepeti Temizlenir"];
+    veritabani_islem_bitir [label="COMMIT TRANSACTION"];
+    onay_sayfasi [label="Sipariş Onay Sayfası Gösterilir"];
+
+    // Çıktı / Hata Düğümleri
+    node [shape=note, style=filled, fillcolor="#fff3cd"];
+    stok_yetersiz_hata [label="HATA:\nStok Yetersiz"];
+    indirim_gecersiz_hata [label="HATA:\nKod Geçersiz"];
+    indirim_sure_dolmus_hata [label="HATA:\nKodun Süresi Dolmuş"];
+    indirim_min_tutar_hata [label="HATA:\nMinimum Sepet Tutarı Sağlanmadı"];
+    odeme_basarisiz_hata [label="HATA:\nÖdeme Başarısız"];
+
+    // --- AKIŞ BAĞLANTILARI ---
+
+    // Başlangıç ve Sepet İşlemleri
+    start_node -> oturum_yonetimi;
+    oturum_yonetimi -> sepete_ekle;
+    sepete_ekle -> stok_kontrol [label="Ürün ID ve Miktar Oku"];
+    
+    stok_kontrol -> urun_sepete_eklenir [label=" EVET "];
+    stok_kontrol -> stok_yetersiz_hata [label=" HAYIR "];
+    stok_yetersiz_hata -> sepete_ekle; // Kullanıcı başka ürün deneyebilir
+
+    urun_sepete_eklenir -> sepeti_goster;
+    
+    // Sepet Sayfası ve İndirim
+    sepeti_goster -> indirim_kodu_gir;
+    sepeti_goster -> odeme_adimina_gec [label="'Satın Al' Tıklandı"];
+    indirim_kodu_gir -> indirim_kod_gecerli [label="Kod Uygula"];
+
+    indirim_kod_gecerli -> indirim_gecersiz_hata [label=" HAYIR "];
+    indirim_kod_gecerli -> indirim_sure_dolmus [label=" EVET "];
+
+    indirim_sure_dolmus -> indirim_sure_dolmus_hata [label=" EVET "];
+    indirim_sure_dolmus -> indirim_min_tutar [label=" HAYIR "];
+    
+    indirim_min_tutar -> indirim_min_tutar_hata [label=" HAYIR "];
+    indirim_min_tutar -> indirim_uygulanir [label=" EVET "];
+
+    // Hata ve başarı durumlarından sonra sepetin güncel halini gösterme
+    indirim_uygulanir -> sepeti_goster;
+    indirim_gecersiz_hata -> sepeti_goster;
+    indirim_sure_dolmus_hata -> sepeti_goster;
+    indirim_min_tutar_hata -> sepeti_goster;
+
+    // Ödeme Süreci
+    odeme_adimina_gec -> kargo_bedava_mi;
+
+    kargo_bedava_mi -> kargo_hesapla [label=" HAYIR "];
+    kargo_bedava_mi -> toplam_goster [label=" EVET \n(Kargo=0)"];
+    
+    kargo_hesapla -> toplam_goster;
+    
+    toplam_goster -> odeme_yap;
+    odeme_yap -> odeme_basarili [label="Ödeme Servisine Gönder"];
+    
+    odeme_basarili -> odeme_basarisiz_hata [label=" HAYIR "];
+    odeme_basarisiz_hata -> odeme_yap; // Tekrar deneme imkanı
+
+    // Başarılı Ödeme Akışı (Transaction)
+    odeme_basarili -> veritabani_islem_baslat [label=" EVET "];
+    veritabani_islem_baslat -> siparis_olustur;
+    siparis_olustur -> stok_dus;
+    stok_dus -> sepeti_temizle;
+    sepeti_temizle -> veritabani_islem_bitir;
+    veritabani_islem_bitir -> onay_sayfasi;
+    onay_sayfasi -> end_node;
+}
