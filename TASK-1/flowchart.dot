@@ -1,0 +1,77 @@
+digraph ATM_Flow {
+    // Grafik ayarları
+    graph [fontname="Helvetica", fontsize=12, label="ATM Para Çekme Akış Şeması", labelloc=t, splines=ortho];
+    node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fillcolor="#EFEFEF"];
+    edge [fontname="Helvetica", fontsize=9];
+
+    // Düğüm Tanımlamaları (Nodes)
+    A [label="BAŞLA"];
+    B [label="Değişkenleri Tanımla\n(PIN, Bakiye, Limit vb.)"];
+    C [label="YAZ: 'Kartınızı takınız.'"];
+    D [label="OKU: PIN"];
+    E [shape=diamond, label="PIN Doğru mu?"];
+    F [label="pinDenemeHakki > 1 mi?"];
+    G [label="pinDenemeHakki'nı 1 azalt"];
+    H [label="YAZ: 'Hatalı PIN.\nKalan hak: ' + pinDenemeHakki"];
+    I [label="YAZ: 'PIN 3 kez hatalı girildi.\nKart bloke oldu.'"];
+    J [label="YAZ: 'PIN doğrulandı.\nHoş geldiniz.'"];
+    K [label="OKU: Cekilecek Tutar"];
+    L [shape=diamond, label="Tutar 20 TL'nin katı mı?"];
+    M [shape=diamond, label="Bakiye yeterli mi?"];
+    N [shape=diamond, label="Günlük limit aşılıyor mu?"];
+    O [label="İşlemi Gerçekleştir\nBakiye'den düş,\nGünlük Çekilen'e ekle"];
+    P [label="YAZ: 'Paranızı alınız.\nİşlem başarılı.'"];
+    Q [label="YAZ: 'Hata: Tutar 20 TL'nin\nkatı olmalıdır.'"];
+    R [label="YAZ: 'Hata: Yetersiz bakiye.'"];
+    S [label="YAZ: 'Hata: Günlük limiti\naşıyorsunuz.'"];
+    T [label="OKU: 'Başka işlem? (E/H)'"];
+    U [shape=diamond, label="Cevap 'E' mi?"];
+    V [label="YAZ: 'İyi günler.\nKartınızı alınız.'"];
+    W [label="BİTİR"];
+
+    // Akış Bağlantıları (Edges)
+    A -> B;
+    B -> C;
+    C -> D;
+    D -> E;
+
+    // PIN Kontrol Akışı
+    E -> J [label=" Evet "];
+    E -> F [label=" Hayır "];
+    F -> G [label=" Evet "];
+    F -> I [label=" Hayır "];
+    G -> H;
+    H -> D [label=" Tekrar PIN iste "];
+    I -> W;
+
+    // Başarılı PIN Sonrası Akış
+    J -> K;
+    K -> L;
+
+    // Tutar Kontrol Akışı
+    L -> M [label=" Evet "];
+    L -> Q [label=" Hayır "];
+
+    // Bakiye Kontrol Akışı
+    M -> N [label=" Evet "];
+    M -> R [label=" Hayır "];
+
+    // Limit Kontrol Akışı
+    N -> O [label=" Hayır "];
+    N -> S [label=" Evet "];
+
+    // Başarılı İşlem Akışı
+    O -> P;
+    P -> T;
+
+    // Hata Durumlarından Sonra Yeni İşlem Sorusu
+    Q -> T;
+    R -> T;
+    S -> T;
+
+    // Yeni İşlem Döngüsü
+    T -> U;
+    U -> C [label=" Evet "];
+    U -> V [label=" Hayır "];
+    V -> W;
+}
