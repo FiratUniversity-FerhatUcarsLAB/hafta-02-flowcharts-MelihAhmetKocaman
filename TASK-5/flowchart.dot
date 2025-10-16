@@ -1,0 +1,69 @@
+digraph SmartHomeSecurityFlowchart {
+    // Grafik ayarları: Yukarıdan aşağıya akış ve genel düğüm/kenar stilleri
+    rankdir=TB;
+    node [fontname="Inter", style="rounded,filled", shape=box];
+    edge [fontname="Inter"];
+
+    // Düğüm Tanımlamaları (Her bir işlem veya karar için bir kutu)
+    Start [label="Başla", shape=ellipse, fillcolor="#A5D6A7"];
+    Initialize [label="Değişkenleri Başlat\nsistemAktif = DOĞRU\nalarmAktif = YANLIŞ\nalarmSeviyesi = 0"];
+    
+    // Döngünün başlangıcını belirtmek için görünmez bir nokta
+    LoopStart [label="", shape=point, width=0];
+
+    // Karar Düğümleri (Elmas Şekli)
+    IsSystemActive [label="Sistem Aktif mi?", shape=diamond, fillcolor="#FFF59D"];
+    IsThreatDetected [label="Tehdit Algılandı mı\nVE\nAlarm Pasif mi?", shape=diamond, fillcolor="#FFF59D"];
+    IsOwnerHome [label="Ev Sahibi Evde mi?", shape=diamond, fillcolor="#FFF59D"];
+    DetermineAlarmLevel [label="Alarm Seviyesini Belirle", shape=diamond, fillcolor="#FFAB91"];
+    IsAlarmActiveForReset [label="Alarm Aktif mi?", shape=diamond, fillcolor="#FFF59D"];
+    IsResetCommandReceived [label="Sıfırlama Komutu Geldi mi?", shape=diamond, fillcolor="#FFF59D"];
+
+    // İşlem Düğümleri (Dikdörtgen Şekli)
+    ReadSensors [label="Sensörleri Oku\n(Hareket, Kapı/Pencere)"];
+    ActivateCamera [label="Kamera Kaydını Aktive Et"];
+    SetLevel3 [label="alarmSeviyesi = 3 (Yüksek)"];
+    SetLevel2 [label="alarmSeviyesi = 2 (Orta)"];
+    SetLevel1 [label="alarmSeviyesi = 1 (Düşük)"];
+    TriggerAlarmAndNotify [label="ALARM TETİKLE\nalarmAktif = DOĞRU\nSiren Çal\nBildirim Gönder (SMS, App, E-posta)", fillcolor="#EF9A9A"];
+    ResetAlarm [label="Alarmı Sıfırla\nalarmAktif = YANLIŞ\nSiren ve Kamerayı Durdur\n'Devre Dışı Bırakıldı' Bildirimi Gönder"];
+    Wait [label="1 Saniye Bekle"];
+    
+    End [label="Son\n(Ulaşılamaz)", shape=ellipse, fillcolor="#A5D6A7"];
+
+    // Düğümler Arası Bağlantılar (Akış Yönleri)
+    Start -> Initialize;
+    Initialize -> LoopStart;
+    LoopStart -> IsSystemActive;
+
+    IsSystemActive -> ReadSensors [label=" Evet"];
+    IsSystemActive -> IsAlarmActiveForReset [label=" Hayır"];
+    
+    ReadSensors -> IsThreatDetected;
+    IsThreatDetected -> IsOwnerHome [label=" Evet"];
+    IsThreatDetected -> IsAlarmActiveForReset [label=" Hayır"];
+
+    IsOwnerHome -> ActivateCamera [label=" Hayır (Evde Değil)"];
+    IsOwnerHome -> IsAlarmActiveForReset [label=" Evet (Evde)"];
+    
+    ActivateCamera -> DetermineAlarmLevel;
+    DetermineAlarmLevel -> SetLevel3 [label="Hareket VE Kapı/Pencere"];
+    DetermineAlarmLevel -> SetLevel2 [label="Sadece Kapı/Pencere"];
+    DetermineAlarmLevel -> SetLevel1 [label="Sadece Hareket"];
+    SetLevel1 -> TriggerAlarmAndNotify;
+    SetLevel2 -> TriggerAlarmAndNotify;
+    SetLevel3 -> TriggerAlarmAndNotify;
+
+    TriggerAlarmAndNotify -> IsAlarmActiveForReset;
+
+    IsAlarmActiveForReset -> IsResetCommandReceived [label=" Evet"];
+    IsAlarmActiveForReset -> Wait [label=" Hayır"];
+
+    IsResetCommandReceived -> ResetAlarm [label=" Evet"];
+    IsResetCommandReceived -> Wait [label=" Hayır"];
+    
+    ResetAlarm -> Wait;
+    
+    // Geri ok ile sonsuz döngüyü göster
+    Wait -> LoopStart [label="Sürekli", style=bold, color=blue, constraint=false];
+}
