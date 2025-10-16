@@ -1,0 +1,536 @@
+BEN: Hastane randevu sistemi için algoritma: kimlik doğrulama, poliklinik
+
+seçimi, doktor listesi görüntüleme, uygun saatleri gösterme, randevu
+
+onaylama ve SMS gönderme. Pseudocode yaz.
+
+LLM: Elbette, bir hastane randevu sistemi için istenen adımları içeren algoritmanın pseudocode (sözde kod) hali aşağıda sunulmuştur. Bu kod, belirli bir programlama diline bağlı kalmadan, algoritmanın mantıksal akışını adım adım göstermektedir.
+
+Plaintext
+PROGRAM HastaneRandevuSistemi
+
+  // Gerekli değişkenlerin tanımlanması
+  DEĞİŞKEN kullaniciTC, kullaniciParola, secilenPoliklinikID, secilenDoktorID, secilenTarih, secilenSaat, onayMetni TÜRÜNDE METİN
+  DEĞİŞKEN girisBasarili, randevuOlusturuldu TÜRÜNDE MANTIKSAL
+  DEĞİŞKEN mevcutPoliklinikler, mevcutDoktorlar, uygunSaatler TÜRÜNDE LİSTE
+  DEĞİŞKEN aktifKullanici, randevuDetaylari TÜRÜNDE NESNE
+
+  // 1. ADIM: KİMLİK DOĞRULAMA
+  //---------------------------------------------------------
+  BAŞLANGIÇ:
+    EKRANA_YAZ("----- HASTANE RANDEVU SİSTEMİ -----")
+    EKRANA_YAZ("Lütfen TC Kimlik Numaranızı giriniz:")
+    kullaniciTC = KULLANICIDAN_OKU()
+
+    EKRANA_YAZ("Lütfen parolanızı giriniz:")
+    kullaniciParola = KULLANICIDAN_OKU()
+
+    // Kimlik doğrulama fonksiyonu çağrılır
+    girisBasarili = FONKSİYON_KimlikDogrula(kullaniciTC, kullaniciParola)
+
+    EĞER girisBasarili == YANLIŞ
+      EKRANA_YAZ("Hata: Girilen bilgiler yanlış. Lütfen tekrar deneyin.")
+      GİT BAŞLANGIÇ // Kimlik doğrulama adımının başına dön
+    DEĞİLSE
+      aktifKullanici = FONKSİYON_KullaniciBilgileriniGetir(kullaniciTC)
+      EKRANA_YAZ("Hoş geldiniz, " + aktifKullanici.AdSoyad)
+    SON_EĞER
+
+  // 2. ADIM: POLİKLİNİK SEÇİMİ
+  //---------------------------------------------------------
+  POLİKLİNİK_SEÇİMİ:
+    mevcutPoliklinikler = FONKSİYON_PoliklinikleriListele()
+    EKRANA_YAZ("\n----- POLİKLİNİKLER -----")
+    DÖNGÜ her poliklinik İÇİN mevcutPoliklinikler
+      EKRANA_YAZ(poliklinik.ID + " - " + poliklinik.Ad)
+    SON_DÖNGÜ
+    
+    EKRANA_YAZ("Lütfen randevu almak istediğiniz polikliniğin numarasını giriniz:")
+    secilenPoliklinikID = KULLANICIDAN_OKU()
+    
+    EĞER FONKSİYON_PoliklinikGecerliMi(secilenPoliklinikID) == YANLIŞ
+        EKRANA_YAZ("Hata: Geçersiz poliklinik seçimi. Lütfen tekrar deneyin.")
+        GİT POLİKLİNİK_SEÇİMİ
+    SON_EĞER
+
+  // 3. ADIM: DOKTOR SEÇİMİ VE LİSTELEME
+  //---------------------------------------------------------
+  DOKTOR_SEÇİMİ:
+    mevcutDoktorlar = FONKSİYON_DoktorlariListele(secilenPoliklinikID)
+    EKRANA_YAZ("\n----- DOKTORLAR -----")
+    DÖNGÜ her doktor İÇİN mevcutDoktorlar
+      EKRANA_YAZ(doktor.ID + " - " + doktor.Unvan + " " + doktor.AdSoyad)
+    SON_DÖNGÜ
+
+    EKRANA_YAZ("Lütfen doktor numarasını giriniz:")
+    secilenDoktorID = KULLANICIDAN_OKU()
+
+    EĞER FONKSİYON_DoktorGecerliMi(secilenDoktorID, secilenPoliklinikID) == YANLIŞ
+        EKRANA_YAZ("Hata: Geçersiz doktor seçimi. Lütfen tekrar deneyin.")
+        GİT DOKTOR_SEÇİMİ
+    SON_EĞER
+
+  // 4. ADIM: TARİH VE UYGUN SAATLERİ GÖSTERME
+  //---------------------------------------------------------
+  SAAT_SEÇİMİ:
+    EKRANA_YAZ("\nLütfen randevu tarihini giriniz (Örn: 28.10.2025):")
+    secilenTarih = KULLANICIDAN_OKU()
+
+    uygunSaatler = FONKSİYON_UygunSaatleriGetir(secilenDoktorID, secilenTarih)
+
+    EĞER uygunSaatler LİSTESİ BOŞ
+      EKRANA_YAZ("Seçtiğiniz tarihte bu doktor için uygun randevu saati bulunmamaktadır.")
+      EKRANA_YAZ("Başka bir tarih denemek için 'T', menüye dönmek için herhangi bir tuşa basınız.")
+      kullaniciSecimi = KULLANICIDAN_OKU()
+      EĞER kullaniciSecimi == "T" VEYA kullaniciSecimi == "t"
+        GİT SAAT_SEÇİMİ
+      DEĞİLSE
+        EKRANA_YAZ("İşlem iptal edildi.")
+        PROGRAMI_BİTİR
+      SON_EĞER
+    DEĞİLSE
+      EKRANA_YAZ("\n----- " + secilenTarih + " TARİHİ İÇİN UYGUN SAATLER -----")
+      DÖNGÜ her saat İÇİN uygunSaatler
+        EKRANA_YAZ("- " + saat)
+      SON_DÖNGÜ
+      
+      EKRANA_YAZ("Lütfen bir saat seçiniz (Örn: 10:30):")
+      secilenSaat = KULLANICIDAN_OKU()
+      
+      EĞER uygunSaatler LİSTESİNDE secilenSaat YOK
+        EKRANA_YAZ("Hata: Geçersiz saat seçimi. Lütfen listeden bir saat giriniz.")
+        GİT SAAT_SEÇİMİ
+      SON_EĞER
+    SON_EĞER
+
+  // 5. ADIM: RANDEVU ONAYLAMA
+  //---------------------------------------------------------
+  ONAY_ADIMI:
+    randevuDetaylari = FONKSİYON_RandevuDetaylariniOlustur(aktifKullanici, secilenPoliklinikID, secilenDoktorID, secilenTarih, secilenSaat)
+    EKRANA_YAZ("\n----- RANDEVU ONAY -----")
+    EKRANA_YAZ("Hasta: " + randevuDetaylari.HastaAdi)
+    EKRANA_YAZ("Poliklinik: " + randevuDetaylari.PoliklinikAdi)
+    EKRANA_YAZ("Doktor: " + randevuDetaylari.DoktorAdi)
+    EKRANA_YAZ("Tarih: " + randevuDetaylari.Tarih)
+    EKRANA_YAZ("Saat: " + randevuDetaylari.Saat)
+    EKRANA_YAZ("\nYukarıdaki bilgileri onaylıyor musunuz? (E/H)")
+    onayMetni = KULLANICIDAN_OKU()
+
+    EĞER onayMetni == "E" VEYA onayMetni == "e"
+      // Randevu oluşturma fonksiyonu çağrılır
+      randevuOlusturuldu = FONKSİYON_RandevuKaydet(randevuDetaylari)
+      
+      EĞER randevuOlusturuldu == DOĞRU
+        EKRANA_YAZ("Randevunuz başarıyla oluşturulmuştur.")
+        
+        // 6. ADIM: SMS GÖNDERME
+        //---------------------------------------------------------
+        smsMesaji = "Sayin " + randevuDetaylari.HastaAdi + ", " + randevuDetaylari.Tarih + " " + randevuDetaylari.Saat + " tarihli randevunuz " + randevuDetaylari.DoktorAdi + " adina olusturulmustur. Saglikli gunler dileriz."
+        FONKSİYON_SmsGonder(aktifKullanici.Telefon, smsMesaji)
+        EKRANA_YAZ("Randevu bilgileriniz SMS ile telefonunuza gönderilmiştir.")
+        
+      DEĞİLSE
+        EKRANA_YAZ("Hata: Randevu oluşturulurken bir sorun oluştu. Lütfen tekrar deneyin.")
+      SON_EĞER
+      
+    DEĞİLSE
+      EKRANA_YAZ("Randevu işlemi tarafınızca iptal edilmiştir.")
+    SON_EĞER
+
+  PROGRAMI_BİTİR
+
+SON PROGRAM
+
+BEN: Tahlil sonucu görüntüleme sistemi: kimlik doğrulama, tahlil varlığı
+
+kontrolü, sonuç hazır mı kontrolü, görüntüleme veya bekleme mesajı, PDF
+
+indirme. Pseudocode yaz.
+
+LLM: Elbette, bir tahlil sonucu görüntüleme sistemi için istenen adımları içeren algoritmanın pseudocode (sözde kod) hali aşağıda sunulmuştur. Bu kod, kullanıcı doğrulamasından başlayarak sonucun PDF olarak indirilmesine kadar olan tüm süreci mantıksal adımlarla açıklar.
+
+Plaintext
+PROGRAM TahlilSonucGoruntuleme
+
+  // Değişkenlerin tanımlanması
+  DEĞİŞKEN kullaniciTC, kullaniciBarkod, secilenTahlilID TÜRÜNDE METİN
+  DEĞİŞKEN girisBasarili TÜRÜNDE MANTIKSAL
+  DEĞİŞKEN kullanicininTahlilleri TÜRÜNDE LİSTE
+  DEĞİŞKEN secilenTahlil, sonucDetaylari TÜRÜNDE NESNE
+
+  // 1. ADIM: KİMLİK DOĞRULAMA
+  //---------------------------------------------------------
+  BAŞLANGIÇ:
+    EKRANA_YAZ("----- TAHLİL SONUÇ SİSTEMİ -----")
+    EKRANA_YAZ("Lütfen TC Kimlik Numaranızı giriniz:")
+    kullaniciTC = KULLANICIDAN_OKU()
+
+    EKRANA_YAZ("Lütfen tahlil barkod numaranızı veya parolanızı giriniz:")
+    kullaniciBarkod = KULLANICIDAN_OKU()
+
+    // Veritabanından kimlik bilgilerini kontrol eden fonksiyon
+    girisBasarili = FONKSİYON_KimlikDogrula(kullaniciTC, kullaniciBarkod)
+
+    EĞER girisBasarili == YANLIŞ
+      EKRANA_YAZ("Hata: Girilen bilgiler yanlış. Lütfen tekrar deneyin.")
+      GİT BAŞLANGIÇ // Kimlik doğrulama adımının başına dön
+    DEĞİLSE
+      EKRANA_YAZ("Kimlik doğrulama başarılı.")
+    SON_EĞER
+
+  // 2. ADIM: TAHLİL VARLIĞI KONTROLÜ
+  //---------------------------------------------------------
+  TAHLİL_SEÇİMİ:
+    // Kullanıcıya ait tüm tahlilleri veritabanından getiren fonksiyon
+    kullanicininTahlilleri = FONKSİYON_TahlilleriGetir(kullaniciTC)
+
+    EĞER kullanicininTahlilleri LİSTESİ BOŞ
+      EKRANA_YAZ("Sistemde adınıza kayıtlı herhangi bir tahlil bulunmamaktadır.")
+      PROGRAMI_BİTİR
+    DEĞİLSE
+      EKRANA_YAZ("\n----- SİSTEMDE KAYITLI TAHLİLLERİNİZ -----")
+      DÖNGÜ her tahlil İÇİN kullanicininTahlilleri
+        // Tahlilin durumu (Örn: "Sonuç Hazır", "Çalışılıyor") ile birlikte listelenir
+        EKRANA_YAZ(tahlil.ID + " - " + tahlil.Tarih + " - " + tahlil.TahlilAdi + " [" + tahlil.Durum + "]")
+      SON_DÖNGÜ
+      
+      EKRANA_YAZ("\nSonucunu görüntülemek istediğiniz tahlilin numarasını giriniz:")
+      secilenTahlilID = KULLANICIDAN_OKU()
+      
+      // Kullanıcının girdiği ID'ye sahip tahlili listeden bul
+      secilenTahlil = FONKSİYON_TahliliBul(kullanicininTahlilleri, secilenTahlilID)
+      
+      EĞER secilenTahlil == BULUNAMADI
+        EKRANA_YAZ("Hata: Geçersiz tahlil numarası girdiniz. Lütfen tekrar deneyin.")
+        GİT TAHLİL_SEÇİMİ
+      SON_EĞER
+    SON_EĞER
+
+  // 3. ADIM: SONUÇ HAZIR MI KONTROLÜ
+  //---------------------------------------------------------
+  // 4. ADIM: GÖRÜNTÜLEME VEYA BEKLEME MESAJI
+  //---------------------------------------------------------
+    EĞER secilenTahlil.Durum == "Sonuç Hazır"
+      EKRANA_YAZ("\n----- TAHLİL SONUÇ DETAYLARI -----")
+      // Veritabanından tahlilin detaylı sonuçlarını getiren fonksiyon
+      sonucDetaylari = FONKSİYON_SonucDetaylariniGetir(secilenTahlil.ID)
+
+      // Sonuçları ekrana yazdır (Örnek)
+      DÖNGÜ her parametre, deger İÇİN sonucDetaylari.Parametreler
+        EKRANA_YAZ(parametre + ": " + deger + " (" + sonucDetaylari.ReferansAraliklari[parametre] + ")")
+      SON_DÖNGÜ
+      
+      // 5. ADIM: PDF İNDİRME SEÇENEĞİ
+      //---------------------------------------------------------
+      EKRANA_YAZ("\nSonucu PDF olarak indirmek ister misiniz? (E/H)")
+      kullaniciCevap = KULLANICIDAN_OKU()
+      
+      EĞER kullaniciCevap == "E" VEYA kullaniciCevap == "e"
+        // Sonuç detaylarını alıp PDF oluşturan ve indirmeyi başlatan fonksiyon
+        FONKSİYON_PdfOlusturVeIndir(sonucDetaylari)
+        EKRANA_YAZ("PDF dosyası başarıyla indirildi.")
+      DEĞİLSE
+        EKRANA_YAZ("İşlem tamamlandı.")
+      SON_EĞER
+      
+    DEĞİLSE // Sonuç hazır değilse
+      EKRANA_YAZ("\nUYARI: Seçtiğiniz tahlilin sonucu henüz hazırlanmamıştır.")
+      EKRANA_YAZ("Durumu: " + secilenTahlil.Durum)
+      EKRANA_YAZ("Lütfen daha sonra tekrar kontrol ediniz.")
+    SON_EĞER
+
+  PROGRAMI_BİTİR
+
+SON PROGRAM
+
+BEN: bu iki modülü bir ana menü içerisinde birleştir
+
+LLM: Harika bir fikir. Hastane Randevu Sistemi ve Tahlil Sonuç Görüntüleme Sistemi modüllerini tek bir ana menü altında birleştiren, kullanıcının istediği işlemi seçebileceği birleşik bir pseudocode (sözde kod) aşağıda sunulmuştur.
+
+Bu algoritma, kullanıcıya önce hangi işlemi yapmak istediğini sorar ve seçimine göre ilgili modülü çalıştırır.
+
+Plaintext
+PROGRAM BirlesikHastaneSistemi
+
+  // ANA MENÜ DÖNGÜSÜ
+  //---------------------------------------------------------
+  DÖNGÜSÜZ_OLARAK_ÇALIŞTIR
+    EKRANA_YAZ("\n==============================================")
+    EKRANA_YAZ("===== BİRLEŞİK HASTANE BİLGİ SİSTEMİ =====")
+    EKRANA_YAZ("==============================================")
+    EKRANA_YAZ("1. Hastane Randevusu Al")
+    EKRANA_YAZ("2. Tahlil Sonuçlarını Görüntüle")
+    EKRANA_YAZ("3. Çıkış")
+    EKRANA_YAZ("----------------------------------------------")
+    EKRANA_YAZ("Lütfen yapmak istediğiniz işlemin numarasını giriniz:")
+    
+    kullaniciSecimi = KULLANICIDAN_OKU()
+
+    // Kullanıcının seçimine göre ilgili modülü çalıştır
+    SEÇİM_YAPISI kullaniciSecimi
+      DURUM "1":
+        // Hastane Randevu Modülünü Başlat
+        FONKSİYON_RandevuSisteminiCalistir()
+        BEKLE(3 saniye) // Kullanıcının sonucu görmesi için kısa bir bekleme
+      DURUM "2":
+        // Tahlil Sonuç Modülünü Başlat
+        FONKSİYON_TahlilSisteminiCalistir()
+        BEKLE(3 saniye) // Kullanıcının sonucu görmesi için kısa bir bekleme
+      DURUM "3":
+        EKRANA_YAZ("Sistemden çıkış yapılıyor...")
+        DÖNGÜYÜ_KIR // Ana menü döngüsünden çık
+      VARSAYILAN:
+        EKRANA_YAZ("Hata: Geçersiz seçim. Lütfen menüden bir numara giriniz.")
+        BEKLE(2 saniye)
+    SON_SEÇİM_YAPISI
+  SON_DÖNGÜ
+
+SON PROGRAM
+
+// =========================================================================
+// MODÜL 1: HASTANE RANDEVU SİSTEMİ FONKSİYONU
+// =========================================================================
+FONKSİYON FONKSİYON_RandevuSisteminiCalistir()
+
+  EKRANA_YAZ("\n----- HASTANE RANDEVU SİSTEMİNE YÖNLENDİRİLDİNİZ -----")
+  
+  //--- 1. ADIM: KİMLİK DOĞRULAMA ---
+  EKRANA_YAZ("Lütfen TC Kimlik Numaranızı giriniz:")
+  kullaniciTC = KULLANICIDAN_OKU()
+  EKRANA_YAZ("Lütfen parolanızı giriniz:")
+  kullaniciParola = KULLANICIDAN_OKU()
+
+  EĞER FONKSİYON_KimlikDogrula(kullaniciTC, kullaniciParola) == YANLIŞ
+    EKRANA_YAZ("Hata: Kimlik doğrulanamadı. Ana menüye dönülüyor.")
+    DÖN // Fonksiyondan çık
+  SON_EĞER
+  aktifKullanici = FONKSİYON_KullaniciBilgileriniGetir(kullaniciTC)
+  EKRANA_YAZ("Hoş geldiniz, " + aktifKullanici.AdSoyad)
+
+  //--- 2. ADIM: POLİKLİNİK SEÇİMİ ---
+  mevcutPoliklinikler = FONKSİYON_PoliklinikleriListele()
+  EKRANA_YAZ("\n----- POLİKLİNİKLER -----")
+  DÖNGÜ her poliklinik İÇİN mevcutPoliklinikler
+    EKRANA_YAZ(poliklinik.ID + " - " + poliklinik.Ad)
+  SON_DÖNGÜ
+  EKRANA_YAZ("Lütfen bir poliklinik numarası giriniz:")
+  secilenPoliklinikID = KULLANICIDAN_OKU()
+  
+  //--- 3. ADIM: DOKTOR SEÇİMİ ---
+  mevcutDoktorlar = FONKSİYON_DoktorlariListele(secilenPoliklinikID)
+  EKRANA_YAZ("\n----- DOKTORLAR -----")
+  DÖNGÜ her doktor İÇİN mevcutDoktorlar
+    EKRANA_YAZ(doktor.ID + " - " + doktor.Unvan + " " + doktor.AdSoyad)
+  SON_DÖNGÜ
+  EKRANA_YAZ("Lütfen bir doktor numarası giriniz:")
+  secilenDoktorID = KULLANICIDAN_OKU()
+
+  //--- 4. ADIM: TARİH VE SAAT SEÇİMİ ---
+  EKRANA_YAZ("\nLütfen randevu tarihini giriniz (GG.AA.YYYY):")
+  secilenTarih = KULLANICIDAN_OKU()
+  uygunSaatler = FONKSİYON_UygunSaatleriGetir(secilenDoktorID, secilenTarih)
+  
+  EĞER uygunSaatler LİSTESİ BOŞ
+    EKRANA_YAZ("Bu tarihte uygun randevu bulunmamaktadır. Ana menüye dönülüyor.")
+    DÖN
+  SON_EĞER
+  
+  EKRANA_YAZ("Uygun Saatler: " + BİRLEŞTİR(uygunSaatler, ", "))
+  EKRANA_YAZ("Lütfen bir saat seçiniz (SS:DD):")
+  secilenSaat = KULLANICIDAN_OKU()
+
+  //--- 5. ADIM: RANDEVU ONAYLAMA ---
+  EKRANA_YAZ("\nRandevuyu onaylıyor musunuz? (E/H)")
+  onay = KULLANICIDAN_OKU()
+  
+  EĞER onay == "E" VEYA onay == "e"
+    randevuBasarili = FONKSİYON_RandevuKaydet(aktifKullanici.ID, secilenDoktorID, secilenTarih, secilenSaat)
+    EĞER randevuBasarili
+      EKRANA_YAZ("Randevunuz başarıyla oluşturulmuştur.")
+      //--- 6. ADIM: SMS GÖNDERME ---
+      smsMesaji = "Sayin " + aktifKullanici.AdSoyad + ", " + secilenTarih + " " + secilenSaat + " tarihli randevunuz olusturulmustur."
+      FONKSİYON_SmsGonder(aktifKullanici.Telefon, smsMesaji)
+      EKRANA_YAZ("Randevu bilgileriniz SMS ile gönderilmiştir.")
+    DEĞİLSE
+      EKRANA_YAZ("Hata: Randevu oluşturulamadı.")
+    SON_EĞER
+  DEĞİLSE
+    EKRANA_YAZ("Randevu işlemi iptal edildi.")
+  SON_EĞER
+  EKRANA_YAZ("Ana menüye dönülüyor...")
+SON_FONKSİYON
+
+// =========================================================================
+// MODÜL 2: TAHLİL SONUÇ SİSTEMİ FONKSİYONU
+// =========================================================================
+FONKSİYON FONKSİYON_TahlilSisteminiCalistir()
+
+  EKRANA_YAZ("\n----- TAHLİL SONUÇ SİSTEMİNE YÖNLENDİRİLDİNİZ -----")
+
+  //--- 1. ADIM: KİMLİK DOĞRULAMA ---
+  EKRANA_YAZ("Lütfen TC Kimlik Numaranızı giriniz:")
+  kullaniciTC = KULLANICIDAN_OKU()
+  EKRANA_YAZ("Lütfen tahlil barkod numaranızı veya parolanızı giriniz:")
+  kullaniciBarkod = KULLANICIDAN_OKU()
+
+  EĞER FONKSİYON_KimlikDogrula(kullaniciTC, kullaniciBarkod) == YANLIŞ
+    EKRANA_YAZ("Hata: Kimlik doğrulanamadı. Ana menüye dönülüyor.")
+    DÖN // Fonksiyondan çık
+  SON_EĞER
+  EKRANA_YAZ("Kimlik doğrulama başarılı.")
+
+  //--- 2. ADIM: TAHLİL VARLIĞI KONTROLÜ ---
+  kullanicininTahlilleri = FONKSİYON_TahlilleriGetir(kullaniciTC)
+  
+  EĞER kullanicininTahlilleri LİSTESİ BOŞ
+    EKRANA_YAZ("Sistemde adınıza kayıtlı tahlil bulunmamaktadır. Ana menüye dönülüyor.")
+    DÖN
+  SON_EĞER
+  
+  EKRANA_YAZ("\n----- KAYITLI TAHLİLLERİNİZ -----")
+  DÖNGÜ her tahlil İÇİN kullanicininTahlilleri
+    EKRANA_YAZ(tahlil.ID + " - " + tahlil.Tarih + " - " + tahlil.TahlilAdi + " [" + tahlil.Durum + "]")
+  SON_DÖNGÜ
+  
+  EKRANA_YAZ("\nİncelemek istediğiniz tahlilin numarasını giriniz:")
+  secilenTahlilID = KULLANICIDAN_OKU()
+  secilenTahlil = FONKSİYON_TahliliBul(kullanicininTahlilleri, secilenTahlilID)
+  
+  EĞER secilenTahlil == BULUNAMADI
+    EKRANA_YAZ("Geçersiz seçim. Ana menüye dönülüyor.")
+    DÖN
+  SON_EĞER
+  
+  //--- 3. & 4. ADIMLAR: SONUÇ KONTROLÜ VE GÖRÜNTÜLEME ---
+  EĞER secilenTahlil.Durum == "Sonuç Hazır"
+    sonucDetaylari = FONKSİYON_SonucDetaylariniGetir(secilenTahlil.ID)
+    EKRANA_YAZ("\n----- SONUÇ DETAYLARI -----")
+    DÖNGÜ her parametre, deger İÇİN sonucDetaylari.Parametreler
+      EKRANA_YAZ(parametre + ": " + deger)
+    SON_DÖNGÜ
+    
+    //--- 5. ADIM: PDF İNDİRME ---
+    EKRANA_YAZ("\nSonucu PDF olarak indirmek ister misiniz? (E/H)")
+    cevap = KULLANICIDAN_OKU()
+    EĞER cevap == "E" VEYA cevap == "e"
+      FONKSİYON_PdfOlusturVeIndir(sonucDetaylari)
+      EKRANA_YAZ("PDF dosyası başarıyla indirildi.")
+    SON_EĞER
+  DEĞİLSE
+    EKRANA_YAZ("\nUYARI: Bu tahlilin sonucu henüz hazır değil. Durum: " + secilenTahlil.Durum)
+  SON_EĞER
+  EKRANA_YAZ("Ana menüye dönülüyor...")
+SON_FONKSİYON
+
+BEN: bu Pseudocode’u Graphviz DOT formatına çevir.
+
+LLM: Elbette, birleşik hastane sistemi pseudocode'unun Graphviz DOT formatına çevrilmiş hali aşağıdadır. Bu kod, sistemin akışını görsel bir diyagram olarak oluşturur.
+
+Bu kodu Graphviz'i destekleyen herhangi bir online editör (örneğin, dreampuf.github.io/GraphvizOnline/ veya edotor.net) veya yerel bir Graphviz kurulumu ile görselleştirebilirsiniz.
+
+Graphviz DOT Kodu
+Kod snippet'i
+digraph BirlesikHastaneSistemi {
+    // Genel Graf Ayarları
+    graph [fontname="Helvetica", fontsize=12, label="Birleşik Hastane Sistemi Akış Diyagramı", labelloc=t, rankdir=TB];
+    node [fontname="Helvetica", fontsize=10, style="rounded,filled", shape=box];
+    edge [fontname="Helvetica", fontsize=9];
+
+    // Düğüm Stilleri
+    start_end [shape=ellipse, fillcolor="#B4E7B4"];
+    io [shape=parallelogram, fillcolor="#A7D2E8"];
+    process [shape=box, fillcolor="#F9E79F"];
+    decision [shape=diamond, fillcolor="#F5B7B1"];
+    module_call [shape=cds, style="filled", fillcolor="#D2B4DE"];
+
+    // 1. Ana Akış Düğümleri
+    Start [label="Başla", shape=ellipse, fillcolor="#B4E7B4"];
+    MainMenu [label="Ana Menüyü Göster\n1. Randevu Al\n2. Tahlil Sonucu Görüntüle\n3. Çıkış", shape=parallelogram, fillcolor="#A7D2E8"];
+    ReadChoice [label="Kullanıcı Seçimini Oku", shape=parallelogram, fillcolor="#A7D2E8"];
+    ChoiceDecision [label="Seçim Ne?", shape=diamond, fillcolor="#F5B7B1"];
+    InvalidChoice [label="Geçersiz Seçim Uyarısı Ver", shape=box, fillcolor="#FADBD8"];
+    End [label="Bitir", shape=ellipse, fillcolor="#B4E7B4"];
+
+    // 2. Ana Akış Bağlantıları
+    Start -> MainMenu;
+    MainMenu -> ReadChoice;
+    ReadChoice -> ChoiceDecision;
+    ChoiceDecision -> module_call_randevu [label="1: Randevu"];
+    ChoiceDecision -> module_call_tahlil [label="2: Tahlil"];
+    ChoiceDecision -> End [label="3: Çıkış"];
+    ChoiceDecision -> InvalidChoice [label="Geçersiz"];
+    InvalidChoice -> MainMenu;
+
+
+    // 3. Randevu Sistemi Modülü (Alt Grafik)
+    subgraph cluster_randevu {
+        label = "Modül 1: Randevu Sistemi";
+        style = "filled";
+        color = "lightgrey";
+
+        module_call_randevu [label="Randevu Modülünü Başlat"];
+        R_Auth_IO [label="TC ve Parola İste", shape=parallelogram, fillcolor="#A7D2E8"];
+        R_Auth_Decision [label="Kimlik Doğrulama\nBaşarılı mı?", shape=diamond, fillcolor="#F5B7B1"];
+        R_Auth_Fail [label="Hata: Kimlik Doğrulanamadı", shape=box, fillcolor="#FADBD8"];
+        R_List_Pol [label="Poliklinikleri Listele", shape=box, fillcolor="#F9E79F"];
+        R_Select_Pol [label="Poliklinik Seç", shape=parallelogram, fillcolor="#A7D2E8"];
+        R_Select_Date [label="Tarih ve Doktor Seç", shape=parallelogram, fillcolor="#A7D2E8"];
+        R_Check_Slots_Decision [label="Uygun Saat Var mı?", shape=diamond, fillcolor="#F5B7B1"];
+        R_No_Slots [label="Uygun Saat Yok Uyarısı", shape=box, fillcolor="#FADBD8"];
+        R_Select_Slot [label="Saat Seç", shape=parallelogram, fillcolor="#A7D2E8"];
+        R_Confirm_Decision [label="Kullanıcı Onayladı mı?", shape=diamond, fillcolor="#F5B7B1"];
+        R_Cancelled [label="İşlem İptal Edildi", shape=box, fillcolor="#FADBD8"];
+        R_Save_Appt [label="Randevuyu Kaydet", shape=box, fillcolor="#F9E79F"];
+        R_Save_Success [label="Randevu Oluşturuldu", shape=box, fillcolor="#F9E79F"];
+        R_Send_SMS [label="SMS Gönder", shape=box, fillcolor="#F9E79F"];
+
+        // Randevu Modülü Akışı
+        module_call_randevu -> R_Auth_IO -> R_Auth_Decision;
+        R_Auth_Decision -> R_List_Pol [label="Evet"];
+        R_Auth_Decision -> R_Auth_Fail [label="Hayır"];
+        R_List_Pol -> R_Select_Pol -> R_Select_Date -> R_Check_Slots_Decision;
+        R_Check_Slots_Decision -> R_Select_Slot [label="Evet"];
+        R_Check_Slots_Decision -> R_No_Slots [label="Hayır"];
+        R_Select_Slot -> R_Confirm_Decision;
+        R_Confirm_Decision -> R_Save_Appt [label="Evet"];
+        R_Confirm_Decision -> R_Cancelled [label="Hayır"];
+        R_Save_Appt -> R_Save_Success -> R_Send_SMS;
+    }
+
+    // 4. Tahlil Sistemi Modülü (Alt Grafik)
+    subgraph cluster_tahlil {
+        label = "Modül 2: Tahlil Sonuç Sistemi";
+        style = "filled";
+        color = "lightgrey";
+
+        module_call_tahlil [label="Tahlil Modülünü Başlat"];
+        T_Auth_IO [label="TC ve Barkod İste", shape=parallelogram, fillcolor="#A7D2E8"];
+        T_Auth_Decision [label="Kimlik Doğrulama\nBaşarılı mı?", shape=diamond, fillcolor="#F5B7B1"];
+        T_Auth_Fail [label="Hata: Kimlik Doğrulanamadı", shape=box, fillcolor="#FADBD8"];
+        T_Get_Tests_Decision [label="Kayıtlı Tahlil Var mı?", shape=diamond, fillcolor="#F5B7B1"];
+        T_No_Tests [label="Kayıtlı Tahlil Yok Uyarısı", shape=box, fillcolor="#FADBD8"];
+        T_Select_Test [label="Tahlil Seç", shape=parallelogram, fillcolor="#A7D2E8"];
+        T_Check_Status_Decision [label="Sonuç Hazır mı?", shape=diamond, fillcolor="#F5B7B1"];
+        T_Not_Ready [label="Sonuç Hazır Değil Uyarısı", shape=box, fillcolor="#FADBD8"];
+        T_Display_Results [label="Sonuçları Göster", shape=parallelogram, fillcolor="#A7D2E8"];
+        T_PDF_Decision [label="PDF İsteniyor mu?", shape=diamond, fillcolor="#F5B7B1"];
+        T_Download_PDF [label="PDF Oluştur ve İndir", shape=box, fillcolor="#F9E79F"];
+
+        // Tahlil Modülü Akışı
+        module_call_tahlil -> T_Auth_IO -> T_Auth_Decision;
+        T_Auth_Decision -> T_Get_Tests_Decision [label="Evet"];
+        T_Auth_Decision -> T_Auth_Fail [label="Hayır"];
+        T_Get_Tests_Decision -> T_Select_Test [label="Evet"];
+        T_Get_Tests_Decision -> T_No_Tests [label="Hayır"];
+        T_Select_Test -> T_Check_Status_Decision;
+        T_Check_Status_Decision -> T_Display_Results [label="Evet"];
+        T_Check_Status_Decision -> T_Not_Ready [label="Hayır"];
+        T_Display_Results -> T_PDF_Decision;
+        T_PDF_Decision -> T_Download_PDF [label="Evet"];
+    }
+
+    // 5. Modüllerden Ana Menüye Dönüş Bağlantıları
+    {R_Auth_Fail, R_No_Slots, R_Cancelled, R_Send_SMS} -> MainMenu;
+    {T_Auth_Fail, T_No_Tests, T_Not_Ready, T_Download_PDF} -> MainMenu;
+    T_PDF_Decision -> MainMenu [label="Hayır"];
+}
