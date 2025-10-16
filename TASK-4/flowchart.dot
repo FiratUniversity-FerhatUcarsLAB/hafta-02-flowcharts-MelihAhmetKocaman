@@ -1,0 +1,105 @@
+digraph DersKayitSistemi {
+    // Grafik ayarları
+    rankdir=TB;
+    node [fontname="Helvetica", fontsize=10];
+    edge [fontname="Helvetica", fontsize=9];
+
+    // Düğüm (node) şekilleri
+    node [shape=box, style="rounded,filled", fillcolor="#e3f2fd"]; // İşlem adımları
+    start [shape=ellipse, style=filled, fillcolor="#c8e6c9", label="Başla"];
+    end [shape=ellipse, style=filled, fillcolor="#ffcdd2", label="Son"];
+
+    // Karar noktaları için özel stil
+    node [shape=diamond, style=filled, fillcolor="#fff9c4"];
+    LoginCheck [label="Giriş Bilgileri\nDoğru mu?"];
+    SecimKontrol [label="Kullanıcı Seçimi Nedir?"];
+    DersBulundu [label="İstenen Ders\nSistemde Var mı?"];
+    KrediLimitiKontrolu [label="Toplam Kredi > 35 mi?"];
+    KontenjanKontrolu [label="Kontenjan Dolu mu?"];
+    OnKosulKontrolu [label="Ön Koşul\nSağlanıyor mu?"];
+    ZamanCakismasiKontrolu [label="Zaman Çakışması\nVar mı?"];
+    GpaKontrolu [label="GPA < 2.5 mi?"];
+
+    // İşlem Düğümleri
+    node [shape=box, style="rounded,filled", fillcolor="#e3f2fd"];
+    Giris [label="Öğrenci No ve Şifre Al"];
+    MainMenu [label="Ana Menüyü Göster\n1. Dersleri Görüntüle\n2. Ders Ekle\n3. Ders Çıkar\n4. Özeti Göster\n5. Kaydı Tamamla"];
+    DersleriGoruntule [label="Tüm Dersleri Listele"];
+    DersEkle [label="Eklenecek Ders Kodunu Al"];
+    DersCikar [label="Çıkarılacak Ders Kodunu Al"];
+    SecilenleriGoster [label="Seçilen Dersleri ve\nToplam Krediyi Göster"];
+    KayitOzetiGoster [label="Kayıt Özetini Göster"];
+    DanismanOnayiGerekli [label="Kayıt Danışman Onayına Gönderildi"];
+    KayitOnaylandi [label="Kayıt Başarıyla Onaylandı"];
+    HataGiris [label="HATA:\nHatalı Giriş"];
+    HataDersBulunamadi [label="HATA:\nDers Bulunamadı"];
+    HataKrediAsimi [label="HATA:\nKredi Limiti Aşıldı"];
+    HataKontenjanDolu [label="HATA:\nKontenjan Dolu"];
+    HataOnKosul [label="HATA:\nÖn Koşul Sağlanmadı"];
+    HataZamanCakismasi [label="HATA:\nZaman Çakışması"];
+    DersEklendi [label="Ders Başarıyla Eklendi\nKredi Güncellendi"];
+    GecersizSecim [label="Geçersiz Seçim Yapıldı"];
+
+
+    // Akış Şeması Bağlantıları (Edges)
+    
+    // 1. Giriş Akışı
+    start -> Giris;
+    Giris -> LoginCheck;
+    LoginCheck -> MainMenu [label="Evet, Başarılı"];
+    LoginCheck -> HataGiris [label="Hayır, Hatalı"];
+    HataGiris -> end;
+
+    // 2. Ana Menü Döngüsü
+    MainMenu -> SecimKontrol;
+
+    // 3. Menü Seçenekleri Akışı
+    
+    // Seçim 1: Dersleri Görüntüle
+    SecimKontrol -> DersleriGoruntule [label="1"];
+    DersleriGoruntule -> MainMenu;
+
+    // Seçim 2: Ders Ekle (En detaylı akış)
+    SecimKontrol -> DersEkle [label="2"];
+    DersEkle -> DersBulundu;
+    DersBulundu -> KrediLimitiKontrolu [label="Evet, Bulundu"];
+    DersBulundu -> HataDersBulunamadi [label="Hayır, Bulunamadı"];
+    HataDersBulunamadi -> MainMenu;
+    
+    KrediLimitiKontrolu -> HataKrediAsimi [label="Evet, Aşıldı"];
+    HataKrediAsimi -> MainMenu;
+    KrediLimitiKontrolu -> KontenjanKontrolu [label="Hayır, Limit OK"];
+
+    KontenjanKontrolu -> HataKontenjanDolu [label="Evet, Dolu"];
+    HataKontenjanDolu -> MainMenu;
+    KontenjanKontrolu -> OnKosulKontrolu [label="Hayır, Yer Var"];
+
+    OnKosulKontrolu -> HataOnKosul [label="Hayır, Sağlanmıyor"];
+    HataOnKosul -> MainMenu;
+    OnKosulKontrolu -> ZamanCakismasiKontrolu [label="Evet, Sağlanıyor"];
+    
+    ZamanCakismasiKontrolu -> HataZamanCakismasi [label="Evet, Var"];
+    HataZamanCakismasi -> MainMenu;
+    ZamanCakismasiKontrolu -> DersEklendi [label="Hayır, Yok"];
+    DersEklendi -> MainMenu;
+
+    // Seçim 3: Ders Çıkar
+    SecimKontrol -> DersCikar [label="3"];
+    DersCikar -> MainMenu; // (Detaylandırılmadığı için direkt menüye döner)
+
+    // Seçim 4: Seçilenleri Göster
+    SecimKontrol -> SecilenleriGoster [label="4"];
+    SecilenleriGoster -> MainMenu;
+    
+    // Geçersiz Seçim
+    SecimKontrol -> GecersizSecim [label="Geçersiz Seçim"];
+    GecersizSecim -> MainMenu;
+
+    // Seçim 5: Kaydı Tamamla (Döngüden çıkış)
+    SecimKontrol -> KayitOzetiGoster [label="5"];
+    KayitOzetiGoster -> GpaKontrolu;
+    GpaKontrolu -> DanismanOnayiGerekli [label="Evet"];
+    GpaKontrolu -> KayitOnaylandi [label="Hayır"];
+    DanismanOnayiGerekli -> end;
+    KayitOnaylandi -> end;
+}
