@@ -1,0 +1,104 @@
+digraph BirlesikHastaneSistemi {
+    // Genel Graf Ayarları
+    graph [fontname="Helvetica", fontsize=12, label="Birleşik Hastane Sistemi Akış Diyagramı", labelloc=t, rankdir=TB];
+    node [fontname="Helvetica", fontsize=10, style="rounded,filled", shape=box];
+    edge [fontname="Helvetica", fontsize=9];
+
+    // Düğüm Stilleri
+    start_end [shape=ellipse, fillcolor="#B4E7B4"];
+    io [shape=parallelogram, fillcolor="#A7D2E8"];
+    process [shape=box, fillcolor="#F9E79F"];
+    decision [shape=diamond, fillcolor="#F5B7B1"];
+    module_call [shape=cds, style="filled", fillcolor="#D2B4DE"];
+
+    // 1. Ana Akış Düğümleri
+    Start [label="Başla", shape=ellipse, fillcolor="#B4E7B4"];
+    MainMenu [label="Ana Menüyü Göster\n1. Randevu Al\n2. Tahlil Sonucu Görüntüle\n3. Çıkış", shape=parallelogram, fillcolor="#A7D2E8"];
+    ReadChoice [label="Kullanıcı Seçimini Oku", shape=parallelogram, fillcolor="#A7D2E8"];
+    ChoiceDecision [label="Seçim Ne?", shape=diamond, fillcolor="#F5B7B1"];
+    InvalidChoice [label="Geçersiz Seçim Uyarısı Ver", shape=box, fillcolor="#FADBD8"];
+    End [label="Bitir", shape=ellipse, fillcolor="#B4E7B4"];
+
+    // 2. Ana Akış Bağlantıları
+    Start -> MainMenu;
+    MainMenu -> ReadChoice;
+    ReadChoice -> ChoiceDecision;
+    ChoiceDecision -> module_call_randevu [label="1: Randevu"];
+    ChoiceDecision -> module_call_tahlil [label="2: Tahlil"];
+    ChoiceDecision -> End [label="3: Çıkış"];
+    ChoiceDecision -> InvalidChoice [label="Geçersiz"];
+    InvalidChoice -> MainMenu;
+
+
+    // 3. Randevu Sistemi Modülü (Alt Grafik)
+    subgraph cluster_randevu {
+        label = "Modül 1: Randevu Sistemi";
+        style = "filled";
+        color = "lightgrey";
+
+        module_call_randevu [label="Randevu Modülünü Başlat"];
+        R_Auth_IO [label="TC ve Parola İste", shape=parallelogram, fillcolor="#A7D2E8"];
+        R_Auth_Decision [label="Kimlik Doğrulama\nBaşarılı mı?", shape=diamond, fillcolor="#F5B7B1"];
+        R_Auth_Fail [label="Hata: Kimlik Doğrulanamadı", shape=box, fillcolor="#FADBD8"];
+        R_List_Pol [label="Poliklinikleri Listele", shape=box, fillcolor="#F9E79F"];
+        R_Select_Pol [label="Poliklinik Seç", shape=parallelogram, fillcolor="#A7D2E8"];
+        R_Select_Date [label="Tarih ve Doktor Seç", shape=parallelogram, fillcolor="#A7D2E8"];
+        R_Check_Slots_Decision [label="Uygun Saat Var mı?", shape=diamond, fillcolor="#F5B7B1"];
+        R_No_Slots [label="Uygun Saat Yok Uyarısı", shape=box, fillcolor="#FADBD8"];
+        R_Select_Slot [label="Saat Seç", shape=parallelogram, fillcolor="#A7D2E8"];
+        R_Confirm_Decision [label="Kullanıcı Onayladı mı?", shape=diamond, fillcolor="#F5B7B1"];
+        R_Cancelled [label="İşlem İptal Edildi", shape=box, fillcolor="#FADBD8"];
+        R_Save_Appt [label="Randevuyu Kaydet", shape=box, fillcolor="#F9E79F"];
+        R_Save_Success [label="Randevu Oluşturuldu", shape=box, fillcolor="#F9E79F"];
+        R_Send_SMS [label="SMS Gönder", shape=box, fillcolor="#F9E79F"];
+
+        // Randevu Modülü Akışı
+        module_call_randevu -> R_Auth_IO -> R_Auth_Decision;
+        R_Auth_Decision -> R_List_Pol [label="Evet"];
+        R_Auth_Decision -> R_Auth_Fail [label="Hayır"];
+        R_List_Pol -> R_Select_Pol -> R_Select_Date -> R_Check_Slots_Decision;
+        R_Check_Slots_Decision -> R_Select_Slot [label="Evet"];
+        R_Check_Slots_Decision -> R_No_Slots [label="Hayır"];
+        R_Select_Slot -> R_Confirm_Decision;
+        R_Confirm_Decision -> R_Save_Appt [label="Evet"];
+        R_Confirm_Decision -> R_Cancelled [label="Hayır"];
+        R_Save_Appt -> R_Save_Success -> R_Send_SMS;
+    }
+
+    // 4. Tahlil Sistemi Modülü (Alt Grafik)
+    subgraph cluster_tahlil {
+        label = "Modül 2: Tahlil Sonuç Sistemi";
+        style = "filled";
+        color = "lightgrey";
+
+        module_call_tahlil [label="Tahlil Modülünü Başlat"];
+        T_Auth_IO [label="TC ve Barkod İste", shape=parallelogram, fillcolor="#A7D2E8"];
+        T_Auth_Decision [label="Kimlik Doğrulama\nBaşarılı mı?", shape=diamond, fillcolor="#F5B7B1"];
+        T_Auth_Fail [label="Hata: Kimlik Doğrulanamadı", shape=box, fillcolor="#FADBD8"];
+        T_Get_Tests_Decision [label="Kayıtlı Tahlil Var mı?", shape=diamond, fillcolor="#F5B7B1"];
+        T_No_Tests [label="Kayıtlı Tahlil Yok Uyarısı", shape=box, fillcolor="#FADBD8"];
+        T_Select_Test [label="Tahlil Seç", shape=parallelogram, fillcolor="#A7D2E8"];
+        T_Check_Status_Decision [label="Sonuç Hazır mı?", shape=diamond, fillcolor="#F5B7B1"];
+        T_Not_Ready [label="Sonuç Hazır Değil Uyarısı", shape=box, fillcolor="#FADBD8"];
+        T_Display_Results [label="Sonuçları Göster", shape=parallelogram, fillcolor="#A7D2E8"];
+        T_PDF_Decision [label="PDF İsteniyor mu?", shape=diamond, fillcolor="#F5B7B1"];
+        T_Download_PDF [label="PDF Oluştur ve İndir", shape=box, fillcolor="#F9E79F"];
+
+        // Tahlil Modülü Akışı
+        module_call_tahlil -> T_Auth_IO -> T_Auth_Decision;
+        T_Auth_Decision -> T_Get_Tests_Decision [label="Evet"];
+        T_Auth_Decision -> T_Auth_Fail [label="Hayır"];
+        T_Get_Tests_Decision -> T_Select_Test [label="Evet"];
+        T_Get_Tests_Decision -> T_No_Tests [label="Hayır"];
+        T_Select_Test -> T_Check_Status_Decision;
+        T_Check_Status_Decision -> T_Display_Results [label="Evet"];
+        T_Check_Status_Decision -> T_Not_Ready [label="Hayır"];
+        T_Display_Results -> T_PDF_Decision;
+        T_PDF_Decision -> T_Download_PDF [label="Evet"];
+    }
+
+    // 5. Modüllerden Ana Menüye Dönüş Bağlantıları
+    {R_Auth_Fail, R_No_Slots, R_Cancelled, R_Send_SMS} -> MainMenu;
+    {T_Auth_Fail, T_No_Tests, T_Not_Ready, T_Download_PDF} -> MainMenu;
+    T_PDF_Decision -> MainMenu [label="Hayır"];
+}
